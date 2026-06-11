@@ -51,6 +51,7 @@ class OrganizationEmail(models.Model):
 
     class Meta:
         unique_together = ("organization", "email")
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.email
