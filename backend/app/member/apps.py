@@ -1,9 +1,9 @@
 from django.apps import AppConfig
 
 
-class EmployeeConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'employee'
+class MemberConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "member"
 
     def ready(self):
-        import employee.signals  # noqa
+        import member.signals  # noqa: F401 — register signal handlers

@@ -63,7 +63,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: oneupai_celery
-    command: celery -A project worker -l info
+    command: celery -A app_settings worker -l info
     env_file:
       - .env
     environment:

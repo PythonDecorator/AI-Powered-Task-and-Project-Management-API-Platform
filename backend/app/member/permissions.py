@@ -1,61 +1,72 @@
+"""
+Member app permissions.
+
+All permission logic lives in organization/permissions.py (ROLE_PERMISSIONS).
+These classes are thin wrappers that resolve the member from the requesting
+user and delegate to the shared RBAC helpers.
+
+Member.role is the single source of truth — no Django user_permissions,
+no separate permission model.
+"""
 from rest_framework import permissions
 
+from organization.permissions import OrgAction, role_has_permission
 
-class CanManageEmployees(permissions.BasePermission):
+
+def get_caller_member(request):
     """
-    Custom permission to only allow permitted employees to manage employees.
+    Return the requesting user's Member record, or None.
+    Uses the OneToOne reverse accessor. Guards against users who have no
+    member record (e.g. a freshly registered user who hasn't been hired yet).
     """
+    try:
+        return request.user.member
+    except Exception:
+        return None
+
+
+class IsMemberActive(permissions.BasePermission):
+    """Base gate: user must be authenticated and have an active Member record."""
+
+    message = "You must be an active member of an organization to perform this action."
 
     def has_permission(self, request, view):
-        """
-        Return `True` if the user making the request is authenticated.
-        """
-        if not request.user.employee.is_active:
+        if not request.user or not request.user.is_authenticated:
             return False
+        member = get_caller_member(request)
+        return member is not None and member.is_active
 
-        return request.user.has_perm('company.manage_employees')
 
-
-class CanHireEmployee(permissions.BasePermission):
+class _RBACPermission(IsMemberActive):
     """
-    Custom permission to only allow users from the same company to hire employees.
+    Internal base for role-checked permissions.
+    Subclasses set `required_action` to an OrgAction constant.
+    Inherits the is_active guard from IsMemberActive.
     """
+    required_action: str = ""
 
     def has_permission(self, request, view):
-        """
-        Return `True` if the user making the request belongs to the company.
-        """
-        if not request.user.employee.is_active:
+        if not super().has_permission(request, view):
             return False
-
-        return request.user.has_perm('company.hire_employees')
-
-
-class CanFireEmployee(permissions.BasePermission):
-    """
-    Custom permission to only allow users from the same company to fire employees.
-    """
-
-    def has_permission(self, request, view):
-        """
-        Return `True` if the user making the request belongs to the company and has the necessary permissions.
-        """
-        if not request.user.employee.is_active:
-            return False
-
-        return request.user.has_perm('company.fire_employees')
+        member = get_caller_member(request)
+        return role_has_permission(member.role, self.required_action)
 
 
-class CanGiveEmployeesPermissions(permissions.BasePermission):
-    """
-    Custom permission to only allow permitted employees to give other employees permissions.
-    """
+class CanManageMembers(_RBACPermission):
+    required_action = OrgAction.MANAGE_MEMBERS
+    message = "You do not have permission to manage members."
 
-    def has_permission(self, request, view):
-        """
-        Return `True` if the user making the request has permission.
-        """
-        if not request.user.employee.is_active:
-            return False
 
-        return request.user.has_perm('company.give_employees_permissions')
+class CanHireMember(_RBACPermission):
+    required_action = OrgAction.HIRE_MEMBERS
+    message = "You do not have permission to hire members."
+
+
+class CanFireMember(_RBACPermission):
+    required_action = OrgAction.FIRE_MEMBERS
+    message = "You do not have permission to fire members."
+
+
+class CanGiveMembersPermissions(_RBACPermission):
+    required_action = OrgAction.GIVE_MEMBER_PERMISSIONS
+    message = "You do not have permission to change member roles."

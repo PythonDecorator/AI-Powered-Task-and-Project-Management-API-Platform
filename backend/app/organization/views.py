@@ -9,35 +9,23 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from . import serializers
 from organization.models import Organization, OrganizationEmail
-from .permissions_rbac import IsOrgOwner
+from .permissions import IsOrgOwner
 
 
-class ManageOrganizationAPIView(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class ManageOrganizationAPIView(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
+                                mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """CRUD + extras for the authenticated user's organization."""
 
     authentication_classes = [JWTAuthentication]
     # IsOrgOwner covers update + destroy via has_object_permission.
-    permission_classes     = [permissions.IsAuthenticated, IsOrgOwner]
-    serializer_class       = serializers.OrganizationDetailsSerializer
-
-    # ── Queryset ───────────────────────────────────────────────────────────────
+    permission_classes = [permissions.IsAuthenticated, IsOrgOwner]
+    serializer_class = serializers.OrganizationDetailsSerializer
 
     def get_queryset(self):
         """Scope to the requesting user's org; prefetch to avoid N+1 queries."""
-        return (
-            Organization.objects
-            .filter(user=self.request.user)
-            .select_related("user")
-            .prefetch_related("organization_emails")
-        )
-
-    # ── Serializer dispatch ────────────────────────────────────────────────────
+        return (Organization.objects.filter(user=self.request.user).select_related("user")
+                .prefetch_related("organization_emails")
+                )
 
     def get_serializer_class(self):
         if self.action == "change_logo":
@@ -46,18 +34,13 @@ class ManageOrganizationAPIView(
             return serializers.OrganizationEmailSerializer
         return self.serializer_class
 
-    # ── Standard actions ───────────────────────────────────────────────────────
-
     def create(self, request, *args, **kwargs):
         if Organization.objects.filter(user=request.user).exists():
             return Response(
                 {
                     "ok": False,
-                    "error": (
-                        "You already have an organization. "
-                        "To create another one, register with a different email."
-                    ),
-                },
+                    "error": ("You already have an organization. "
+                              "To create another one, register with a different email.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -85,15 +68,15 @@ class ManageOrganizationAPIView(
         serializer.save(user=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
-        instance   = self.get_object()
+        instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(
             {"ok": True, "message": "Organization retrieved successfully.", "results": serializer.data}
         )
 
     def update(self, request, *args, **kwargs):
-        partial    = kwargs.pop("partial", False)
-        instance   = self.get_object()
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -113,13 +96,11 @@ class ManageOrganizationAPIView(
             status=status.HTTP_200_OK,
         )
 
-    # ── Logo ───────────────────────────────────────────────────────────────────
-
     @action(methods=["POST"], detail=True, url_path="change-logo")
     def change_logo(self, request, pk=None):  # noqa
         """Replace the organization logo."""
         organization = self.get_object()  # triggers IsOrgOwner.has_object_permission
-        serializer   = self.get_serializer(organization, data=request.data)
+        serializer = self.get_serializer(organization, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
@@ -127,25 +108,24 @@ class ManageOrganizationAPIView(
             status=status.HTTP_200_OK,
         )
 
-    # ── Emails ─────────────────────────────────────────────────────────────────
-
     @action(methods=["GET"], detail=True, url_path="emails")
     def emails(self, request, pk=None):  # noqa
         """List all contact emails for the organization (paginated)."""
         organization = self.get_object()
-        qs   = organization.organization_emails.all()
+        qs = organization.organization_emails.all()
         page = self.paginate_queryset(qs)
         if page is not None:
             return self.get_paginated_response(self.get_serializer(page, many=True).data)
         return Response(
-            {"ok": True, "message": "Emails retrieved successfully.", "results": self.get_serializer(qs, many=True).data}
+            {"ok": True, "message": "Emails retrieved successfully.",
+             "results": self.get_serializer(qs, many=True).data}
         )
 
     @action(methods=["POST"], detail=True, url_path="emails/add")
     def add_email(self, request, pk=None):  # noqa
         """Add a contact email to the organization."""
         organization = self.get_object()
-        serializer   = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         OrganizationEmail.objects.get_or_create(
             organization=organization,
@@ -156,11 +136,7 @@ class ManageOrganizationAPIView(
             status=status.HTTP_201_CREATED,
         )
 
-    @action(
-        methods=["DELETE"],
-        detail=True,
-        url_path=r"emails/(?P<email_pk>[0-9]+)/remove",
-    )
+    @action(methods=["DELETE"], detail=True, url_path=r"emails/(?P<email_pk>[0-9]+)/remove")
     def remove_email(self, request, pk=None, email_pk=None):  # noqa
         """Remove a contact email from the organization by its ID."""
         organization = self.get_object()

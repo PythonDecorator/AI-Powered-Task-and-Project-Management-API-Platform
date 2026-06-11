@@ -1,278 +1,310 @@
 """
-Company Employee API Views
+Member API Views.
 """
-import math
 import jwt
-from collections import OrderedDict
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from rest_framework import permissions, viewsets, status, authentication, exceptions, mixins, pagination
+from rest_framework import permissions, status, mixins, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.core.cache import cache
 from django.views.decorators.vary import vary_on_cookie, vary_on_headers
+from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
-from django_redis import get_redis_connection  # noqa
 from django_filters import FilterSet, CharFilter, BooleanFilter
 
 from . import serializers
-from core.authentication import JWTAuthentication
-from employee.models import Employee
-from . import permissions as perms
-from .models import EmployeeInvitationToken
+from .models import Member, MemberInvitationToken
 from . import tasks
-from .permissions import CanManageEmployees
+from .permissions import (
+    IsMemberActive,
+    CanManageMembers,
+    CanHireMember,
+    CanFireMember,
+    CanGiveMembersPermissions,
+)
+
+CACHE_KEY = "cached_members"
 
 
-class PaginateItems(pagination.PageNumberPagination):
-    page_size = 15
-    page_size_query_param = 'per_page'
-    max_page_size = 25
-
-    def get_paginated_response(self, data):
-        return Response(
-            OrderedDict([
-                ('totalItems', self.page.paginator.count),
-                ('countItemsOnPage', self.page_size),
-                ('currentPage', self.page.number),
-                ('next', self.get_next_link()),
-                ('previous', self.get_previous_link()),
-                ('totalPages',  math.ceil(self.page.paginator.count / self.page_size)),
-                ('results', data)
-            ]))
-
-
-class EmployeeFilter(FilterSet):
-    role = CharFilter(field_name='role', lookup_expr='exact')
-    status = CharFilter(field_name='status', lookup_expr='exact')
-    is_active = BooleanFilter(field_name='is_active')
+class MemberFilter(FilterSet):
+    role = CharFilter(field_name="role", lookup_expr="exact")
+    working = CharFilter(field_name="working", lookup_expr="exact")
+    is_active = BooleanFilter(field_name="is_active")
 
     class Meta:
-        model = Employee
-        fields = ['role', "status", 'is_active']
+        model = Member
+        fields = ["role", "working", "is_active"]
 
 
-class ManageEmployeeAPIView(mixins.RetrieveModelMixin,
-                            mixins.UpdateModelMixin,
-                            mixins.ListModelMixin,
-                            GenericViewSet):
-    """Manage an employee for a company."""
-    serializer_class = serializers.ManageEmployeeSerializer
-    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated, CanManageEmployees]
+def _bust_member_cache():
+    """
+    Delete all cache keys that match the cached_members prefix.
+    Falls back to cache.clear() if the backend doesn't support patterns.
+    """
+    try:
+        cache.delete_pattern(f"*{CACHE_KEY}*")
+    except AttributeError:
+        cache.clear()
+
+
+class ManageMemberAPIView(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
+    """Manage members within the authenticated user's organization."""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated, CanManageMembers]
+    serializer_class = serializers.ManageMemberSerializer
     pagination_class = PaginateItems
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    filterset_class = EmployeeFilter
-    ordering_fields = ["salary"]
-    search_fields = ['name', 'role', 'skills', 'address']
+    filterset_class = MemberFilter
+    ordering_fields = ["salary", "hire_date"]
+    search_fields = ["name", "role", "skills", "address"]
 
-    queryset = Employee.objects.all()
+    # Class-level queryset required by DRF router; get_queryset() narrows it.
+    queryset = Member.objects.none()
 
     def get_queryset(self):
-        """Retrieve Employees for the Company of the authenticated user."""
-        queryset = Employee.objects.filter(company=self.request.user.employee.company)
+        """Scope to the requesting user's org."""
+        base = (
+            Member.objects
+            .filter(organization=self.request.user.member.organization)
+            .select_related("user", "manager", "organization")
+            .prefetch_related("departments", "direct_reports")
+        )
 
-        if 'ordering' in self.request.query_params:
-            query_param = self.request.query_params['ordering']
+        ordering = self.request.query_params.get("ordering")
+        if ordering == "max_salary":
+            return base.order_by("-salary")
+        if ordering == "min_salary":
+            return base.order_by("salary")
+        if ordering == "hire_date":
+            return base.order_by("-hire_date")
 
-            if query_param == 'max_salary':
-                return queryset.order_by('-salary').distinct()
-            if query_param == 'min_salary':
-                return queryset.order_by('salary').distinct()
-            if query_param == 'hire_date':
-                return queryset.order_by('-hire_date').distinct()
-
-        return queryset.order_by('-id').distinct()
+        return base.order_by("-id")
 
     def get_permissions(self):
-        if self.action == 'hire_employee':
-            return [permissions.IsAuthenticated(), perms.CanHireEmployee()]
-        elif self.action == 'fire_employee':
-            return [permissions.IsAuthenticated(), perms.CanFireEmployee()]
-        elif self.action == 'give_employee_permissions':
-            return [permissions.IsAuthenticated(), perms.CanGiveEmployeesPermissions()]
-
-        return super().get_permissions()
+        action_map = {
+            "hire_member": [permissions.IsAuthenticated(), CanHireMember()],
+            "fire_member": [permissions.IsAuthenticated(), CanFireMember()],
+            "change_member_role": [permissions.IsAuthenticated(), CanGiveMembersPermissions()],
+        }
+        return action_map.get(self.action, super().get_permissions())
 
     def get_serializer_class(self):
-        """Return the serializer class for request."""
-        if self.action == 'give_employee_permissions':
-            return serializers.EmployeePermissionsSerializer
-
+        if self.action == "change_member_role":
+            return serializers.MemberRoleSerializer
         return self.serializer_class
 
-    @method_decorator(cache_page(60 * 60 * 2, key_prefix='cached_employees'))
+    @method_decorator(cache_page(60 * 60 * 2, key_prefix=CACHE_KEY))
     @method_decorator(vary_on_cookie)
     @method_decorator(vary_on_headers("Authorization"))
     def list(self, request, *args, **kwargs):
-        """Return searched, ordered, filtered and paginated employee(s)"""
+        """Filtered, ordered, and paginated member list."""
         queryset = self.filter_queryset(self.get_queryset())
-
         page = self.paginate_queryset(queryset)
-
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-
-        return Response(serializer.data)
-
-    def update(self, request, *args, **kwargs):
-        """Update an existing employee."""
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, context={'request': request}, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        # Invalidate cache after updating employee
-        cache.delete('cached_employees')
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            return self.get_paginated_response(self.get_serializer(page, many=True).data)
+        return Response(self.get_serializer(queryset, many=True).data)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        response_data = {
-            "ok": True,
-            "message": "Employee retrieve successfully.",
-            "results": serializer.data
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
+        return Response(
+            {"ok": True, "message": "Member retrieved successfully.", "results": serializer.data}
+        )
 
-    @action(methods=['POST'], detail=False, url_path='hire-employee')
-    def hire_employee(self, request, pk=None):  # noqa
-        """Create employee"""
-        serializer = self.get_serializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        email = serializer.data["email"]
-        company = request.user.employee.company
-
-        # Create invitation token
-        payload = {"email": email, "company_id": company.id}
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        token_obj, created = EmployeeInvitationToken.objects.get_or_create(company=company, token=token)
-
-        if not created:
-            return Response({"error": f"The user with email {email} already exist in your company."},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        # Send email confirmation
-        data = {"token": token_obj.token, "email": email, "company_name": company.name}
-
-        # Send invitation email asynchronously
-        getattr(tasks, "send_invitation_email_to_employee_task").delay(data)
-
-        # Clear cache
-        cache.delete('cached_employees')
-
-        response_data = {
-            "ok": True,
-            "message": "Employee created successfully. A confirmation email has been sent to the employee's email.",
-            "results": serializer.data
-        }
-
-        return Response(response_data, status=status.HTTP_201_CREATED)
-
-    @action(methods=['GET'], detail=True, url_path='fire-employee')
-    def fire_employee(self, request, pk=None):  # noqa
-        """Fire employee"""
-        instance = self.get_object()
-        instance.is_active = False
-        instance.termination_date = timezone.now().date()
-        instance.save()
-        instance.refresh_from_db()
-        serializer = self.get_serializer(instance)
-
-        # Clear cache
-        cache.delete('cached_employees')
-
-        response_data = {
-            "ok": True,
-            "message": "Employee have been fired.",
-            "results": serializer.data
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    @action(methods=['PATCH'], detail=True, url_path='give-employee-permissions')
-    def give_employee_permissions(self, request, pk=None):  # noqa
-        """Give employees permissions"""
+    def update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        _bust_member_cache()
+        return Response(
+            {"ok": True, "message": "Member updated successfully.", "results": serializer.data}
+        )
 
-        # Invalidate cached employees
-        cache.delete('cached_employees')
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    @action(methods=["POST"], detail=False, url_path="hire-member")
+    def hire_member(self, request, pk=None):  # noqa
+        """Create a Member row and email them an invitation link."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        member = serializer.save()
+
+        organization = request.user.member.organization
+        email = member.email
+
+        payload = {"email": email, "organization_id": organization.id}
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+
+        _, created = MemberInvitationToken.objects.get_or_create(
+            organization=organization,
+            email=email,
+            defaults={"token": token},
+        )
+
+        if not created:
+            member.delete()
+            return Response(
+                {"ok": False, "error": f"{email} has already been invited to this organization."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tasks.send_invitation_email_to_member_task.delay(
+            {"invitation_token": token, "email": email, "first_name": member.name}
+        )
+
+        _bust_member_cache()
+        return Response(
+            {
+                "ok": True,
+                "message": "Member created. An invitation email has been sent.",
+                "results": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(methods=["POST"], detail=True, url_path="fire-member")
+    def fire_member(self, request, pk=None):  # noqa
+        """Deactivate a member (set is_active=False, record termination date)."""
+        instance = self.get_object()
+
+        if instance == request.user.member:
+            return Response(
+                {"ok": False, "error": "You cannot fire yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        instance.is_active = False
+        instance.termination_date = timezone.now().date()
+        instance.save(update_fields=["is_active", "termination_date"])
+
+        _bust_member_cache()
+        return Response(
+            {
+                "ok": True,
+                "message": "Member has been deactivated.",
+                "results": self.get_serializer(instance).data,
+            }
+        )
+
+    @action(methods=["PATCH"], detail=True, url_path="change-role")
+    def change_member_role(self, request, pk=None):  # noqa
+        """
+        MemberPermission table or Django user_permissions involved.
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        _bust_member_cache()
+        return Response(
+            {
+                "ok": True,
+                "message": f"{instance.name}'s role has been updated.",
+                "results": serializer.data,
+            }
+        )
 
 
-class EmployeeConfirmInvitationAPIView(APIView):
-    """Employee invitation email confirmation view"""
+class MemberConfirmInvitationAPIView(APIView):
+    """
+    Called when the new hire clicks the link in their invitation email.
+    """
 
     def get(self, request):  # noqa
-        token = request.GET.get('token')
-        exists = EmployeeInvitationToken.objects.filter(token=token).exists()
+        raw_token = request.GET.get("token", "").strip()
+        if not raw_token:
+            return Response(
+                {"ok": False, "error": "Token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if not exists:
-            return Response({"error": "Token not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        token_obj = EmployeeInvitationToken.objects.filter(token=token).first()
-
-        # Decode token_obj
         try:
-            payload = jwt.decode(token_obj.token, settings.SECRET_KEY, algorithms=['HS256'])
-        except jwt.exceptions.DecodeError:
-            raise exceptions.ValidationError('Invalid token')
-        except Exception as e:
-            print(e)
-            raise exceptions.ValidationError('An error has occurred please try again later.')
+            token_obj = MemberInvitationToken.objects.select_related("organization").get(
+                token=raw_token
+            )
+        except MemberInvitationToken.DoesNotExist:
+            return Response(
+                {"ok": False, "error": "Invitation token not found or already used."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        user = get_user_model().objects.filter(email=payload["email"]).first()
+        try:
+            payload = jwt.decode(raw_token, settings.SECRET_KEY, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            token_obj.delete()
+            return Response(
+                {"ok": False, "error": "Invitation link has expired. Please ask to be re-invited."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except jwt.DecodeError:
+            raise exceptions.ValidationError("Invalid invitation token.")
+        except Exception:
+            raise exceptions.ValidationError("An error occurred. Please try again.")
 
+        email = payload["email"]
+        organization_id = payload["organization_id"]
+
+        user = get_user_model().objects.filter(email=email).first()
         if not user:
-            return Response({"error": f"Please create an account with this email {payload['email']}"
-                                      f" before using this link"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    "ok": False,
+                    "error": f"Please register an account with {email} before using this link.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        new_employee = Employee.objects.filter(**payload).first()
+        try:
+            new_member = Member.objects.get(
+                email=email,
+                organization_id=organization_id,
+            )
+        except Member.DoesNotExist:
+            return Response(
+                {"ok": False, "error": "Member record not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        if not new_employee:
-            return Response({"error": "Employee not found!"}, status=status.HTTP_404_NOT_FOUND)
+        new_member.user = user
+        new_member.is_active = True
+        new_member.save(update_fields=["user", "is_active"])
 
-        # Update employee info
-        new_employee.user = user
-        new_employee.is_active = True
-        new_employee.save()
-
-        # Delete the token from the database
         token_obj.delete()
 
-        response_data = {
-            "ok": True,
-            "message": f"Employee Hired! You have been added to {new_employee.company.name} company.",
-        }
+        return Response(
+            {
+                "ok": True,
+                "message": f"Welcome! You have been added to {new_member.organization.name}.",
+            }
+        )
 
-        return Response(response_data)
 
-
-class EmployeeAPIView(viewsets.ModelViewSet):
-    """Employee views."""
-    serializer_class = serializers.ManageEmployeeSerializer
-    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+class MemberSelfAPIView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, GenericViewSet):
+    """
+    Lets the authenticated user read and update their own Member record.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated, IsMemberActive]
+    serializer_class = serializers.ManageMemberSerializer
 
     def get_object(self):
-        """Retrieve and return the authenticated user."""
-        return self.request.user
+        return self.request.user.member

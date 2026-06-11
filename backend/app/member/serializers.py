@@ -1,167 +1,159 @@
 """
-Serializers for Employee API View.
+Serializers for Member API Views.
 """
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
 
-from company.models import Company
-from company.permissions import CustomPermissions
 from core.serializers import ProfileSerializer
 from department.models import Department
-from employee.models import Employee, EmployeePermission
+from member.models import Member
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for creating a user."""
-
     class Meta:
         model = get_user_model()
-        fields = ["id", 'first_name', 'last_name', 'email']
-        read_only_fields = ['id', "email"]
+        fields = ["id", "first_name", "last_name", "email"]
+        read_only_fields = ["id", "email"]
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
-        fields = ['id', 'name']
-        read_only_fields = ['id']
+        fields = ["id", "name"]
+        read_only_fields = ["id"]
 
     def validate_name(self, value):
-        company = self.context["request"].user.employee.company
-        if not company.department_set.filter(name=value).exists():
-            raise serializers.ValidationError(f"{value} is not a valid department for {company.name}.")
+        organization = self.context["request"].user.member.organization
+        if not organization.department_set.filter(name=value).exists():
+            raise serializers.ValidationError(
+                f"{value} is not a valid department for {organization.name}."
+            )
         return value
 
 
-class SubordinateSerializer(serializers.ModelSerializer):
-    """Serializer for subordinates."""
+class DirectReportSerializer(serializers.ModelSerializer):
+    """
+    Accepts an email to look up the subordinate within the same org.
+    The manager FK on Member is the single source of truth for hierarchy.
+    """
 
     class Meta:
-        model = Employee
-        fields = ['id', "name", 'email', "role"]
-        read_only_fields = ["id"]
-        extra_kwargs = {"name": {"required": False}, "role": {"required": False}}
+        model = Member
+        fields = ["id", "name", "email", "role"]
+        read_only_fields = ["id", "name", "role"]
+
+    def validate_email(self, value):
+        organization = self.context["request"].user.member.organization
+        if not Member.objects.filter(organization=organization, email=value).exists():
+            raise serializers.ValidationError(
+                f"No member with email {value} found in {organization.name}."
+            )
+        return value
+
+
+class ManageMemberSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating and updating a Member within an organization.
+    """
+    user = UserSerializer(required=False, read_only=True)
+    profile = ProfileSerializer(source="user.profile", required=False, read_only=True)
+    departments = DepartmentSerializer(many=True, required=False)
+    direct_reports = DirectReportSerializer(many=True, required=False)
+
+    class Meta:
+        model = Member
+        fields = [
+            "id", "email", "name", "working", "salary", "role", "skills",
+            "phone", "address",
+            "emergency_contact_name", "emergency_contact_phone", "emergency_contact_email",
+            "resume", "bank_name", "bank_account_number",
+            "social_security_number", "passport_number",
+            "hire_date", "termination_date", "is_active",
+            "manager", "user", "profile", "departments", "direct_reports",
+        ]
+        read_only_fields = ["id", "user", "profile"]
+
+    @staticmethod
+    def _set_departments(member, departments_data):
+        member.departments.clear()
+        if departments_data:
+            depts = [
+                Department.objects.get(organization=member.organization, **d)
+                for d in departments_data
+            ]
+            member.departments.set(depts)
+
+    @staticmethod
+    def _set_direct_reports(member, reports_data):
+        """
+        For each email in reports_data, set that Member's manager FK to this
+        member. This keeps the single manager FK as the source of truth.
+        """
+        Member.objects.filter(manager=member).update(manager=None)
+
+        for report_data in reports_data:
+            email = report_data["email"]
+            if email == member.email:
+                raise serializers.ValidationError(
+                    "A member cannot be their own direct report."
+                )
+            report = Member.objects.get(organization=member.organization, email=email)
+            report.manager = member
+            report.save(update_fields=["manager"])
 
     def validate(self, attrs):
-        email = attrs.get('email')
-        company = self.context["request"].user.employee.company
+        manager = attrs.get("manager")
+        instance = getattr(self, "instance", None)
+        organization = self.context["request"].user.member.organization
 
-        if not Employee.objects.filter(company=company, email=email).exists():
-            raise serializers.ValidationError(f"No employee with {email} found for {company.name}.")
-
+        if manager and manager.organization != organization:
+            raise serializers.ValidationError(
+                {"manager": "The manager must belong to the same organization."}
+            )
+        if manager and instance and manager.pk == instance.pk:
+            raise serializers.ValidationError(
+                {"manager": "A member cannot be their own manager."}
+            )
         return attrs
 
-
-class ManageEmployeeSerializer(serializers.ModelSerializer):
-    """Serializer for managing an employee in a company."""
-    user = UserSerializer(required=False)
-    profile = ProfileSerializer(source='user.profile', required=False)
-    departments = DepartmentSerializer(many=True, required=False)
-    subordinates = SubordinateSerializer(many=True, required=False)
-
-    class Meta:
-        model = Employee
-        fields = ["id", "email", "name", "status", "salary", "role", "skills", "phone", "address",
-                  "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_phone",
-                  "emergency_contact_email", "resume", "contract", "bank_name", "bank_account_number",
-                  "social_security_number", "passport_number", "hire_date", "termination_date", "is_active", "manager",
-                  "user", "profile", "departments", "subordinates",
-                  ]
-        read_only_fields = ['id', "user", "profile"]
-
-    @staticmethod
-    def _set_employee_departments(employee, departments_data):
-        """"Set an employee department"""
-        employee.departments.clear()
-
-        if departments_data:
-            departments = [Department.objects.get(company=employee.company, **dep_data)
-                           for dep_data in departments_data]
-            employee.departments.set(departments)
-
-    @staticmethod
-    def _add_employee_subordinates(employee, subordinates_data):
-        """"Set an employee subordinates"""
-        employee.subordinates.clear()
-
-        if subordinates_data:
-            for subordinate_data in subordinates_data:
-                if subordinate_data["email"] == employee.email:
-                    raise serializers.ValidationError("An employee cannot be its own subordinate.")
-
-            for subordinate_data in subordinates_data:
-                subordinate = Employee.objects.get(company=employee.company, **subordinate_data)
-                employee.subordinates.add(subordinate)
-
     def create(self, validated_data):
-        """Create and return an employee"""
-        departments_data = validated_data.pop('departments', [])
-        subordinates_data = validated_data.pop('subordinates', [])
+        departments_data = validated_data.pop("departments", [])
+        direct_reports_data = validated_data.pop("direct_reports", [])
 
-        company = self.context["request"].user.employee.company
-        employee = Employee.objects.create(company=company, **validated_data)
+        organization = self.context["request"].user.member.organization
+        member = Member.objects.create(organization=organization, **validated_data)
 
-        self._set_employee_departments(employee, departments_data)
-        self._add_employee_subordinates(employee, subordinates_data)
-
-        return employee
+        self._set_departments(member, departments_data)
+        self._set_direct_reports(member, direct_reports_data)
+        return member
 
     def update(self, instance, validated_data):
-        """Update and return the employee instance."""
-        departments_data = validated_data.pop('departments', [])
-        subordinates_data = validated_data.pop('subordinates', [])
+        departments_data = validated_data.pop("departments", [])
+        direct_reports_data = validated_data.pop("direct_reports", [])
 
-        if 'email' in validated_data:
-            validated_data["email"] = instance.email
+        # Email is immutable after creation.
+        validated_data.pop("email", None)
 
-        if 'manager' in validated_data and validated_data['manager'] is not None:
-            manager = validated_data.get('manager')
-            # Check if manager belongs to the same company
-            if manager.company != instance.company:
-                raise serializers.ValidationError("The manager must belong to the same company.")
-
-        employee = super().update(instance, validated_data)
-        self._set_employee_departments(employee, departments_data)
-        self._add_employee_subordinates(employee, subordinates_data)
-
-        return employee
+        member = super().update(instance, validated_data)
+        self._set_departments(member, departments_data)
+        self._set_direct_reports(member, direct_reports_data)
+        return member
 
 
-class EmployeePermissionsDetailSerializer(serializers.ModelSerializer):
-    """Add some employee details to the permissions serializer"""
+class MemberRoleSerializer(serializers.ModelSerializer):
+    """
+    Used by the change-role action.
+    """
 
     class Meta:
-        model = Employee
-        fields = ["id", "name", "email", "role", "skills", "manager"]
-        read_only_fields = ["id", "name", "email", "role", "skills", "manager"]
+        model = Member
+        fields = ["id", "name", "email", "role"]
+        read_only_fields = ["id", "name", "email"]
 
-
-class EmployeePermissionsSerializer(serializers.ModelSerializer):
-    """Serializer for Employee Permissions model."""
-    employee = EmployeePermissionsDetailSerializer(required=False)
-
-    class Meta:
-        model = EmployeePermission
-        fields = "__all__"
-        read_only_fields = ['id', "employee"]
-
-    def update(self, instance, validated_data):
-        """Update employee permissions and set user permissions."""
-        user_permissions = []
-        for codename, granted in validated_data.items():
-            setattr(instance.permissions, codename, granted)
-            instance.permissions.save()
-
-            if granted:
-                # Add permission to user
-                content_type = ContentType.objects.get_for_model(Company)
-                if codename in CustomPermissions.__dict__.values():
-                    perm = Permission.objects.get(content_type=content_type, codename=codename)
-                    user_permissions.append(perm)
-
-        instance.user.user_permissions.set(user_permissions)
-        instance.save()
-
-        return instance.permissions
+    def validate_role(self, value):
+        # Prevent demoting the org owner via this endpoint.
+        if self.instance and self.instance.role == Member.Role.OWNER and value != Member.Role.OWNER:
+            raise serializers.ValidationError(
+                "The organization owner's role cannot be changed via this endpoint."
+            )
+        return value

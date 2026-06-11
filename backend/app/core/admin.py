@@ -3,11 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
 
-from department.models import Department
-from projects.models import Project
-from .models import User, Profile
-from employee.models import Employee, EmployeePermission
-from company.models import Company, CompanyPhoneNumber, CompanyEmail
+from user.models import User
 
 
 class UserAdmin(BaseUserAdmin):
@@ -48,11 +44,3 @@ class UserAdmin(BaseUserAdmin):
 
 admin.site.register(Permission)
 admin.site.register(User, UserAdmin)
-admin.site.register(Profile)
-admin.site.register(Company)
-admin.site.register(Department)
-admin.site.register(Project)
-admin.site.register(CompanyPhoneNumber)
-admin.site.register(CompanyEmail)
-admin.site.register(Employee)
-admin.site.register(EmployeePermission)

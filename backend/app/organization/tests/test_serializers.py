@@ -1,14 +1,11 @@
 """
 Tests for Organization serializers.
 """
-from decimal import Decimal
-from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from rest_framework import serializers
 
-from organization.models import Organization, OrganizationEmail
+from organization.models import OrganizationEmail
 from organization.serializers import (
     OrganizationDetailsSerializer,
     OrganizationEmailSerializer,

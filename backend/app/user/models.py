@@ -1,5 +1,5 @@
 """
-Database Models for Core app
+Database Models for User app
 """
 
 from django.conf import settings
@@ -9,15 +9,15 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.utils import timezone
+
+from core.models import BaseModel
+from utils.helpers import generate_upload_path
 
 
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
-    deleted = models.BooleanField(default=False)
+def image_upload_file_path(instance, filename):  # noqa
+    return generate_upload_path("profile", filename)
 
-    class Meta:
-        abstract = True
 
 
 class UserManager(BaseUserManager):
@@ -73,6 +73,7 @@ class EmailConfirmationToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expired_at = models.DateTimeField()
 
+
 class UserToken(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="auth")
     token = models.CharField(max_length=255)
@@ -80,7 +81,7 @@ class UserToken(models.Model):
     expired_at = models.DateTimeField()
 
 
-class Profile(models.Model):
+class Profile(BaseModel):
     GENDER_CHOICES = (
         ('M', 'Male'),
         ('F', 'Female'),
@@ -93,8 +94,6 @@ class Profile(models.Model):
     bio = models.TextField(null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     birth_date = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.user.name
@@ -108,4 +107,3 @@ class Profile(models.Model):
                     (today.month, today.day) < (self.birth_date.month, self.birth_date.day))
             return age
         return ""
-

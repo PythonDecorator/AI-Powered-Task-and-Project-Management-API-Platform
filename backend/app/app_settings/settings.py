@@ -1,6 +1,5 @@
 import os
 import string
-import sys
 from datetime import timedelta
 from pathlib import Path
 from random import choice
@@ -58,6 +57,11 @@ INSTALLED_APPS = [
     # Local
     "core",
     "user",
+    "organization",
+    "member",
+    "project",
+    "department",
+
 ]
 
 # ─── Middleware
@@ -73,7 +77,7 @@ MIDDLEWARE = [
 ]
 
 # ─── URLs / Templates / WSGI
-ROOT_URLCONF = "project.urls"
+ROOT_URLCONF = "app_settings.urls"
 
 TEMPLATES = [
     {
@@ -91,7 +95,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "project.wsgi.application"
+WSGI_APPLICATION = "app_settings.wsgi.application"
 
 # ─── Database
 DATABASES = {
@@ -162,7 +166,6 @@ REST_FRAMEWORK = {
     },
 }
 
-
 # ─── JWT
 SIMPLE_JWT = {
     # 15 minutes — short enough to limit token-theft exposure while the
@@ -178,7 +181,7 @@ SIMPLE_JWT = {
 # ─── API Docs
 SPECTACULAR_SETTINGS = {
     "TITLE": "OneUp AI",
-    "DESCRIPTION": "AI-powered task and project management.",
+    "DESCRIPTION": "AI-powered task and app_settings management.",
     "VERSION": "1.0.0",
     "COMPONENT_SPLIT_REQUEST": True,
 }
