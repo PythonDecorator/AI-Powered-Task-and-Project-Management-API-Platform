@@ -2,27 +2,25 @@
 Serializers for the user API View.
 """
 
-from django.contrib.auth import (
-    get_user_model,
-    authenticate,
-)
+from django.contrib.auth import authenticate, get_user_model
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from core.models import EmailConfirmationToken
-
+from .helpers import blacklist_all_user_tokens
+from .models import EmailConfirmationToken, Profile
 
 User = get_user_model()
 
 
-class EmailCodeSerializer(serializers.Serializer): # noqa
+class EmailCodeSerializer(serializers.Serializer):  # noqa
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6, min_length=6)
 
     def validate(self, attrs):
-        email = attrs.get('email')
-        code = attrs.get('code')
+        email = attrs.get("email")
+        code = attrs.get("code")
 
         try:
             token = EmailConfirmationToken.objects.get(user__email=email, token=code)
@@ -44,7 +42,7 @@ class EmailCodeSerializer(serializers.Serializer): # noqa
         return user
 
 
-class EmailOnlySerializer(serializers.Serializer): # noqa
+class EmailOnlySerializer(serializers.Serializer):  # noqa
     email = serializers.EmailField()
 
     def validate_email(self, value):  # noqa
@@ -87,6 +85,10 @@ class ResetPasswordSerializer(serializers.Serializer):  # noqa
 
         EmailConfirmationToken.objects.filter(user=user).delete()
 
+        # Invalidate all existing sessions so old tokens cannot be replayed
+        # after a password reset.
+        blacklist_all_user_tokens(user)
+
         return user
 
 
@@ -94,22 +96,19 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object."""
 
     class Meta:
-        model = get_user_model()
-        fields = ['id', 'email', 'name', 'password']
-        extra_kwargs = {"password": {"write_only": True,
-                                     "min_length": 8}
-                        }
+        model = User
+        fields = ["id", "email", "name", "first_name", "last_name", "password"]
+        extra_kwargs = {"password": {"write_only": True, "min_length": 8}}
 
     def create(self, validated_data):
         """Create and return a user with encrypted password."""
-        return get_user_model().objects.create_user(**validated_data, is_verified=False)
+        return User.objects.create_user(**validated_data, is_verified=False)
 
     def update(self, instance, validated_data):
         """Update and return a user with encrypted password."""
-        # pop email from validated_data to avoid updating it
-        validated_data.pop('email', None)
+        validated_data.pop("email", None)  # email is not updatable
 
-        password = validated_data.pop('password', None)
+        password = validated_data.pop("password", None)
         user = super().update(instance, validated_data)
 
         if password:
@@ -119,21 +118,17 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class AuthTokenSerializer(serializers.Serializer): # noqa
-    """Serializer for the user auth token."""
+class LoginSerializer(serializers.Serializer):  # noqa
+    """Serializer for JWT login — validates credentials and returns tokens."""
     email = serializers.EmailField()
-    password = serializers.CharField(
-        style={'input_type': 'password'},
-        trim_whitespace=False,
-    )
+    password = serializers.CharField(style={"input_type": "password"}, trim_whitespace=False)
 
     def validate(self, attrs):
-        """Validate and authenticate the user."""
-        email = attrs.get('email')
-        password = attrs.get('password')
+        email = attrs.get("email")
+        password = attrs.get("password")
 
         user = authenticate(
-            request=self.context.get('request'),
+            request=self.context.get("request"),
             username=email,
             password=password,
         )
@@ -141,14 +136,49 @@ class AuthTokenSerializer(serializers.Serializer): # noqa
         if not user:
             raise serializers.ValidationError(
                 _("Unable to authenticate with provided credentials."),
-                code='authorization'
+                code="authorization",
             )
 
         if not user.is_verified:
             raise serializers.ValidationError(
                 _("Please verify your email address before logging in."),
-                code='authorization'
+                code="authorization",
             )
 
-        attrs['user'] = user
+        attrs["user"] = user
         return attrs
+
+    def get_tokens(self):
+        """Return JWT access and refresh tokens for the validated user."""
+        user = self.validated_data["user"]
+        refresh = RefreshToken.for_user(user)
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
+
+
+class LogoutSerializer(serializers.Serializer):  # noqa
+    """Serializer for logout — blacklists the refresh token."""
+    refresh = serializers.CharField()
+
+    def validate(self, attrs):
+        self.token = attrs.get("refresh")
+        return attrs
+
+    def save(self, **kwargs):
+        try:
+            token = RefreshToken(self.token)
+            token.blacklist()
+        except Exception:
+            raise serializers.ValidationError("Token is invalid or already expired.")
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Serializer getting a user profile."""
+
+    class Meta:
+        model = Profile
+        fields = ["id", "bio", "profession", "gender", "birth_date", "avatar"]
+        extra_kwargs = {"id": {"read_only": True}
+                        }

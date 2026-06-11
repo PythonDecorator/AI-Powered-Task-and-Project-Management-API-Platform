@@ -1,4 +1,3 @@
-
 EMAIL_TEMPLATES = {
     "email_confirmation_token": {
         "subject": "Confirm Your Email Address",
@@ -33,4 +32,21 @@ EMAIL_TEMPLATES = {
             </p>
         """,
     },
+
+    "send_organization_member_invite_email": {
+        "subject": "Invited to join Organization",
+        "heading": "Invite Your Email Address",
+        "template_name": "email/general_email.html",
+        "message": """
+        <p style="font-size: 16px; color: #333;">
+        <p>You have been invited to join our Organization. Please click the link below to accept the
+        invitation:</p>
+        <div style="font-size: 24px; font-weight: bold; color: #c0392b; margin: 10px 0;">
+                {invitation_link}
+            </div>
+        <p>If you have any questions or concerns, feel free to contact us.</p>
+        <p>Best regards,<br> {{ company_name }}</p> <br>
+        """,
+
+    }
 }

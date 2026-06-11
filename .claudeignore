@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+staticfiles/
+collected_static/
+
+# Media & uploads
+media/
+uploads/
+
+# Environment & secrets
+.env
+.env.*
+*.key
+*.pem
+*.cert
+
+# Database
+*.sqlite3
+*.db
+db.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test & coverage artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
+.API_ROUTES.md
+# Migrations (let Claude write new ones, not read all existing)
+**/migrations/*.py
+!**/migrations/__init__.py
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+frontend/.vite/
