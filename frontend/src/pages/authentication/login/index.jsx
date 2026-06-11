@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import LoginForm from './LoginForm';
 import { createGradient } from '../../../assets/theme/utilities';
 import { useLogin } from '../../../utils/hooks/useAuth';
+import { setMockAuth } from '../../../utils/apis';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,6 +19,15 @@ const Login = () => {
         },
       }
     );
+  };
+
+  const handleDemoLogin = () => {
+    setMockAuth({
+      id: 1,
+      first_name: 'Amos',
+      email: 'demo@example.com',
+    });
+    navigate('/dashboard');
   };
 
   useEffect(() => {
@@ -78,7 +88,11 @@ const Login = () => {
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
           }}
         >
-          <LoginForm onSubmit={handleLogin} isLoading={loginMutation.isPending} />
+          <LoginForm
+            onSubmit={handleLogin}
+            isLoading={loginMutation.isPending}
+            onDemoClick={handleDemoLogin}
+          />
         </Box>
       </Container>
     </Box>

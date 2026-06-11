@@ -63,8 +63,13 @@ export const logout = () =>
     refresh: Cookies.get('refresh_token'),
   });
 
-export const getCurrentUser = () =>
-  apiClient.get('/user/me/');
+export const getCurrentUser = async () => {
+  const mockUser = getMockUser();
+  if (mockUser) {
+    return { data: mockUser };
+  }
+  return apiClient.get('/user/me/');
+};
 
 export const setTokens = (accessToken, refreshToken) => {
   Cookies.set('access_token', accessToken, { expires: 1 });
@@ -88,6 +93,18 @@ export const isTokenExpired = (token) => {
   } catch {
     return true;
   }
+};
+
+// Development mode - set mock authentication
+export const setMockAuth = (user = {}) => {
+  const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZmlyc3RfbmFtZSI6IkFtb3MiLCJleHAiOjk5OTk5OTk5OTl9.mock_token';
+  setTokens(mockToken, mockToken);
+  Cookies.set('mock_user', JSON.stringify(user), { expires: 7 });
+};
+
+export const getMockUser = () => {
+  const mock = Cookies.get('mock_user');
+  return mock ? JSON.parse(mock) : null;
 };
 
 export default apiClient;
