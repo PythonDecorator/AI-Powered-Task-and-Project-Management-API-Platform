@@ -53,12 +53,14 @@ ControllerProvider.propTypes = {
 const setDarkMode = (dispatch, value) => dispatch({type: "DARK_MODE", value});
 const setOpenConfigurator = (dispatch, value) => dispatch({ type: "OPEN_CONFIGURATOR", value });
 const setOpenSidenav = (dispatch, value) => dispatch({type: "OPEN_SIDENAV", value});
+const setMiniSidenav = (dispatch, value) => dispatch({type: "OPEN_SIDENAV", value});
 const setOpenDialog = (dispatch, value) => dispatch({type: "OPEN_DIALOG", value});
 
 export {
     ControllerProvider,
     useController,
     setOpenSidenav,
+    setMiniSidenav,
     setDarkMode,
     setOpenDialog,
     setOpenConfigurator,

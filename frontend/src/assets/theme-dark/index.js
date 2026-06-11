@@ -1,8 +1,4 @@
 import { createTheme } from '@mui/material/styles';
-
-// Dark theme is a variant of the light theme with enhanced contrast for OLED displays
-// and deeper backgrounds for reduced eye strain
-
 import dialogActions from "../theme/components/dialog/dialogActions.js";
 import dialogContentText from "../theme/components/dialog/dialogContentText.js";
 import dialogContent from "../theme/components/dialog/dialogContent.js";
@@ -68,12 +64,12 @@ const darkTheme = createTheme({
     mode: "dark",
     ...colors,
     background: {
-      default: "#050510",
-      paper: "#0f0f23",
+      default: "#0f0f23",
+      paper: "#1a1a2e",
     },
     text: {
-      primary: "#ffffff",
-      secondary: "#d0d0d0",
+      primary: "#e0e0e0",
+      secondary: "#b0b0b0",
     },
   },
   breakpoints: { ...breakpoints },
@@ -92,11 +88,6 @@ const darkTheme = createTheme({
       styleOverrides: {
         ...globals,
         ...container,
-        body: {
-          ...globals.body,
-          backgroundColor: "#050510",
-          color: "#ffffff",
-        },
       },
     },
     MuiDrawer: { ...sidenav },
