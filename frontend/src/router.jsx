@@ -1,10 +1,10 @@
-import {lazy, Suspense} from "react";
+import {lazy} from "react";
 import {createBrowserRouter} from "react-router-dom";
 
-import Loader from "./examples/Loader/index.jsx";
 import {checkAuthLoader, protectedAuthLoader} from "./utils/helpers/auth.js";
 import BaseLayout from "./pages/dashboard/BaseLayout/BaseLayout.jsx";
 import AuthBaseLayout from "./pages/authentication/BaseLayout/AuthBaseLayout.jsx";
+import SuspenseWrapper from "./examples/Loader/index.jsx";
 
 // Lazy load authentication pages
 const LoginPage = lazy(() => import("./pages/authentication/login/index.jsx"));
@@ -13,12 +13,7 @@ const LoginPage = lazy(() => import("./pages/authentication/login/index.jsx"));
 const Dashboard = lazy(() => import("./pages/dashboard/index.jsx"));
 
 
-// Helper function to wrap components with Suspense
-const SuspenseWrapper = (Component) => (
-    <Suspense fallback={<Loader/>}>
-        <Component/>
-    </Suspense>
-);
+
 
 const router = createBrowserRouter([
     {
