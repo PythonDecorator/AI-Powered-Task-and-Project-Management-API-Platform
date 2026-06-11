@@ -3,7 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import Cookies from 'js-cookie';
 
 export function getTokenDuration() {
-    const token = Cookies.get('oneupai');
+    const token = Cookies.get('access_token');
     if (!token) return 0;
 
     try {
@@ -18,15 +18,22 @@ export function getTokenDuration() {
 }
 
 export function getAuthToken() {
-    const token = Cookies.get('oneupaiToken');
+    const token = Cookies.get('access_token');
     if (!token) {
         return null;
     }
 
-    // const remainingTime = getTokenDuration();
-    // if (remainingTime <= 0) {
-    //     return 'EXPIRED';
-    // }
+    try {
+        const decodedToken = jwtDecode(token);
+        const expTime = decodedToken.exp * 1000;
+        const now = Date.now();
+        if (expTime - now <= 0) {
+            return 'EXPIRED';
+        }
+    } catch (error) {
+        console.error("Error decoding token:", error);
+        return 'EXPIRED';
+    }
 
     return token;
 }
