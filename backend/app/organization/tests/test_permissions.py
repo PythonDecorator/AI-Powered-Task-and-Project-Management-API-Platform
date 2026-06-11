@@ -4,7 +4,6 @@ Tests for Organization permissions.
 from django.test import TestCase
 from rest_framework.test import APIRequestFactory
 
-from organization.models import Organization
 from organization.permissions import IsOrgOwner
 from utils.create_test_model import TestDb
 

@@ -1,4 +1,3 @@
-
 EMAIL_TEMPLATES = {
     "email_confirmation_token": {
         "subject": "Confirm Your Email Address",
@@ -42,9 +41,6 @@ EMAIL_TEMPLATES = {
         <p style="font-size: 16px; color: #333;">
         <p>You have been invited to join our Organization. Please click the link below to accept the
         invitation:</p>
-        <p><a href="{{invitation_link}}"
-              style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">
-            Accept Invitation</a></p>
         <div style="font-size: 24px; font-weight: bold; color: #c0392b; margin: 10px 0;">
                 {invitation_link}
             </div>

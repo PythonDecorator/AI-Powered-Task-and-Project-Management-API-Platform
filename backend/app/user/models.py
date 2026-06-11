@@ -3,12 +3,12 @@ Database Models for User app
 """
 
 from django.conf import settings
-from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
 )
+from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel
@@ -17,7 +17,6 @@ from utils.helpers import generate_upload_path
 
 def image_upload_file_path(instance, filename):  # noqa
     return generate_upload_path("profile", filename)
-
 
 
 class UserManager(BaseUserManager):
@@ -103,7 +102,7 @@ class Profile(BaseModel):
         """Calculate and return age based on birth_date."""
         if self.birth_date:
             today = timezone.now().date()
-            age = today.year - self.birth_date.year - (
-                    (today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+            age = today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month,
+                                                                                   self.birth_date.day))
             return age
         return ""

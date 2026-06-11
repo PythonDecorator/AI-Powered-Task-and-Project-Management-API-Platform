@@ -5,7 +5,6 @@ from user.models import User
 from utils.create_test_model import TestDb
 
 
-
 class UserModelTest(TestCase):
     def setUp(self):
         self.test_db = TestDb()

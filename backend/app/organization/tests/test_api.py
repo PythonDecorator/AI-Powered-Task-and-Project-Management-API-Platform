@@ -1,7 +1,6 @@
 """
 Tests for Organization API views.
 """
-from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
@@ -19,17 +18,22 @@ from utils.create_test_model import TestDb
 def org_list_url():
     return reverse("organization:organization-list")
 
+
 def org_detail_url(pk):
     return reverse("organization:organization-detail", args=[pk])
+
 
 def org_change_logo_url(pk):
     return reverse("organization:organization-change-logo", args=[pk])
 
+
 def org_emails_url(pk):
     return reverse("organization:organization-emails", args=[pk])
 
+
 def org_add_email_url(pk):
     return reverse("organization:organization-add-email", args=[pk])
+
 
 def org_remove_email_url(pk, email_pk):
     return reverse("organization:organization-remove-email", args=[pk, email_pk])

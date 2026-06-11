@@ -22,6 +22,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters import FilterSet, CharFilter, BooleanFilter
 
+from utils.helpers import PaginateItems
 from . import serializers
 from .models import Member, MemberInvitationToken
 from . import tasks

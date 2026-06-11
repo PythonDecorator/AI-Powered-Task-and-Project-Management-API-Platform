@@ -9,7 +9,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .helpers import blacklist_all_user_tokens
-from .models import EmailConfirmationToken
+from .models import EmailConfirmationToken, Profile
 
 User = get_user_model()
 
@@ -172,3 +172,13 @@ class LogoutSerializer(serializers.Serializer):  # noqa
             token.blacklist()
         except Exception:
             raise serializers.ValidationError("Token is invalid or already expired.")
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Serializer getting a user profile."""
+
+    class Meta:
+        model = Profile
+        fields = ["id", "bio", "profession", "gender", "birth_date", "avatar"]
+        extra_kwargs = {"id": {"read_only": True}
+                        }

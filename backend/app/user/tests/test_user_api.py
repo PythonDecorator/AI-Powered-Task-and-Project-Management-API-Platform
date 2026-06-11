@@ -16,18 +16,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from user.models import EmailConfirmationToken
 from utils.create_test_model import TestDb
 
-# ── URLs ───────────────────────────────────────────────────────────────────────
-
-CREATE_USER_URL             = reverse("user:auth-list")
-VERIFY_CODE_URL             = reverse("user:auth-verify-code")
-RESEND_CODE_URL             = reverse("user:auth-resend-code")
-REQUEST_PASSWORD_RESET_URL  = reverse("user:auth-request-password-reset")
-VERIFY_PASSWORD_RESET_URL   = reverse("user:auth-verify-password-reset-code")
-RESET_PASSWORD_URL          = reverse("user:auth-reset-password")
-LOGIN_URL                   = reverse("user:login")
-LOGOUT_URL                  = reverse("user:logout")
-TOKEN_REFRESH_URL           = reverse("user:token-refresh")
-ME_URL                      = reverse("user:me")
+CREATE_USER_URL = reverse("user:auth-list")
+VERIFY_CODE_URL = reverse("user:auth-verify-code")
+RESEND_CODE_URL = reverse("user:auth-resend-code")
+REQUEST_PASSWORD_RESET_URL = reverse("user:auth-request-password-reset")
+VERIFY_PASSWORD_RESET_URL = reverse("user:auth-verify-password-reset-code")
+RESET_PASSWORD_URL = reverse("user:auth-reset-password")
+LOGIN_URL = reverse("user:login")
+LOGOUT_URL = reverse("user:logout")
+TOKEN_REFRESH_URL = reverse("user:token-refresh")
+ME_URL = reverse("user:me")
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -71,13 +69,13 @@ class UserApiTestCase(TestCase):
     """
 
     def setUp(self):
-        self.db     = TestDb()
+        self.db = TestDb()
         self.client = APIClient()
         self.payload = {
             "first_name": "Test",
-            "last_name":  "User",
-            "email":      self.db.USER_PAYLOAD["email"],
-            "password":   self.db.USER_PAYLOAD["password"],
+            "last_name": "User",
+            "email": self.db.USER_PAYLOAD["email"],
+            "password": self.db.USER_PAYLOAD["password"],
         }
 
 
@@ -148,7 +146,7 @@ class PublicUserApiTests(UserApiTestCase):
         """The confirmation token created at registration expires in ≤ 24 h."""
         self.client.post(CREATE_USER_URL, self.payload)
 
-        user  = get_user_model().objects.get(email=self.payload["email"])
+        user = get_user_model().objects.get(email=self.payload["email"])
         token = EmailConfirmationToken.objects.get(user=user)
 
         expected_max = timezone.now() + timedelta(hours=24, seconds=5)
@@ -160,12 +158,12 @@ class PublicUserApiTests(UserApiTestCase):
         """Valid credentials return both access and refresh tokens."""
         create_verified_user(email=self.payload["email"], password=self.payload["password"])
         res = self.client.post(LOGIN_URL, {
-            "email":    self.payload["email"],
+            "email": self.payload["email"],
             "password": self.payload["password"],
         })
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn("access",  res.data)
+        self.assertIn("access", res.data)
         self.assertIn("refresh", res.data)
 
     def test_login_returns_first_name(self):
@@ -176,7 +174,7 @@ class PublicUserApiTests(UserApiTestCase):
             first_name="Ada",
         )
         res = self.client.post(LOGIN_URL, {
-            "email":    self.payload["email"],
+            "email": self.payload["email"],
             "password": self.payload["password"],
         })
 
@@ -187,7 +185,7 @@ class PublicUserApiTests(UserApiTestCase):
         """Login is rejected for users who have not verified their email."""
         create_user(email=self.payload["email"], password=self.payload["password"])
         res = self.client.post(LOGIN_URL, {
-            "email":    self.payload["email"],
+            "email": self.payload["email"],
             "password": self.payload["password"],
         })
 
@@ -198,7 +196,7 @@ class PublicUserApiTests(UserApiTestCase):
         """Wrong password returns HTTP 400 without tokens."""
         create_verified_user(email=self.payload["email"], password="goodpass123")
         res = self.client.post(LOGIN_URL, {
-            "email":    self.payload["email"],
+            "email": self.payload["email"],
             "password": "badpass123",
         })
 
@@ -208,7 +206,7 @@ class PublicUserApiTests(UserApiTestCase):
     def test_login_nonexistent_email_error(self):
         """Login with an unregistered email returns HTTP 400."""
         res = self.client.post(LOGIN_URL, {
-            "email":    "nobody@example.com",
+            "email": "nobody@example.com",
             "password": self.payload["password"],
         })
 
@@ -233,9 +231,10 @@ class PublicUserApiTests(UserApiTestCase):
 
     def test_token_refresh_success(self):
         """A valid refresh token issues a new access token."""
-        user    = create_verified_user(email=self.payload["email"], password=self.payload["password"])
+        user = create_verified_user(email=self.payload["email"],
+                                    password=self.payload["password"])
         refresh = RefreshToken.for_user(user)
-        res     = self.client.post(TOKEN_REFRESH_URL, {"refresh": str(refresh)})
+        res = self.client.post(TOKEN_REFRESH_URL, {"refresh": str(refresh)})
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("access", res.data)
@@ -248,7 +247,7 @@ class PublicUserApiTests(UserApiTestCase):
 
     def test_token_refresh_with_blacklisted_token_error(self):
         """A blacklisted refresh token cannot be used to obtain a new access token."""
-        user    = create_verified_user(email=self.payload["email"], password=self.payload["password"])
+        user = create_verified_user(email=self.payload["email"], password=self.payload["password"])
         refresh = RefreshToken.for_user(user)
 
         self.client.force_authenticate(user=user)
@@ -277,7 +276,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_CODE_URL, {
             "email": self.payload["email"],
-            "code":  "123456",
+            "code": "123456",
         })
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -292,7 +291,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_CODE_URL, {
             "email": self.payload["email"],
-            "code":  "000000",
+            "code": "000000",
         })
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -306,7 +305,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_CODE_URL, {
             "email": self.payload["email"],
-            "code":  "123456",
+            "code": "123456",
         })
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -318,7 +317,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_CODE_URL, {
             "email": "other@example.com",
-            "code":  "123456",
+            "code": "123456",
         })
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -358,7 +357,7 @@ class PublicUserApiTests(UserApiTestCase):
         create_user(email=self.payload["email"], password=self.payload["password"])
         self.client.post(RESEND_CODE_URL, {"email": self.payload["email"]})
 
-        user  = get_user_model().objects.get(email=self.payload["email"])
+        user = get_user_model().objects.get(email=self.payload["email"])
         token = EmailConfirmationToken.objects.get(user=user)
 
         expected_max = timezone.now() + timedelta(hours=24, seconds=5)
@@ -388,7 +387,7 @@ class PublicUserApiTests(UserApiTestCase):
         create_user(email=self.payload["email"], password=self.payload["password"])
         self.client.post(REQUEST_PASSWORD_RESET_URL, {"email": self.payload["email"]})
 
-        user  = get_user_model().objects.get(email=self.payload["email"])
+        user = get_user_model().objects.get(email=self.payload["email"])
         token = EmailConfirmationToken.objects.get(user=user)
 
         expected_max = timezone.now() + timedelta(minutes=10, seconds=5)
@@ -402,7 +401,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_PASSWORD_RESET_URL, {
             "email": self.payload["email"],
-            "code":  "123456",
+            "code": "123456",
         })
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -416,7 +415,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_PASSWORD_RESET_URL, {
             "email": self.payload["email"],
-            "code":  "123456",
+            "code": "123456",
         })
 
         self.assertNotIn("code", res.data)
@@ -429,7 +428,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         self.client.post(VERIFY_PASSWORD_RESET_URL, {
             "email": self.payload["email"],
-            "code":  "123456",
+            "code": "123456",
         })
 
         mock_send.assert_called_once()
@@ -441,7 +440,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_PASSWORD_RESET_URL, {
             "email": self.payload["email"],
-            "code":  "000000",
+            "code": "000000",
         })
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -453,7 +452,7 @@ class PublicUserApiTests(UserApiTestCase):
 
         res = self.client.post(VERIFY_PASSWORD_RESET_URL, {
             "email": self.payload["email"],
-            "code":  "123456",
+            "code": "123456",
         })
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -464,9 +463,9 @@ class PublicUserApiTests(UserApiTestCase):
         make_confirmation_token(user)
 
         res = self.client.post(RESET_PASSWORD_URL, {
-            "email":            self.payload["email"],
-            "code":             "123456",
-            "password":         "newpass123",
+            "email": self.payload["email"],
+            "code": "123456",
+            "password": "newpass123",
             "confirm_password": "newpass123",
         })
 
@@ -481,9 +480,9 @@ class PublicUserApiTests(UserApiTestCase):
         make_confirmation_token(user)
 
         res = self.client.post(RESET_PASSWORD_URL, {
-            "email":            self.payload["email"],
-            "code":             "123456",
-            "password":         "newpass123",
+            "email": self.payload["email"],
+            "code": "123456",
+            "password": "newpass123",
             "confirm_password": "different123",
         })
 
@@ -495,9 +494,9 @@ class PublicUserApiTests(UserApiTestCase):
         make_confirmation_token(user)
 
         res = self.client.post(RESET_PASSWORD_URL, {
-            "email":            self.payload["email"],
-            "code":             "000000",
-            "password":         "newpass123",
+            "email": self.payload["email"],
+            "code": "000000",
+            "password": "newpass123",
             "confirm_password": "newpass123",
         })
 
@@ -509,9 +508,9 @@ class PublicUserApiTests(UserApiTestCase):
         make_confirmation_token(user, expired=True)
 
         res = self.client.post(RESET_PASSWORD_URL, {
-            "email":            self.payload["email"],
-            "code":             "123456",
-            "password":         "newpass123",
+            "email": self.payload["email"],
+            "code": "123456",
+            "password": "newpass123",
             "confirm_password": "newpass123",
         })
 
@@ -523,9 +522,9 @@ class PublicUserApiTests(UserApiTestCase):
         make_confirmation_token(user)
 
         res = self.client.post(RESET_PASSWORD_URL, {
-            "email":            self.payload["email"],
-            "code":             "123456",
-            "password":         "short",
+            "email": self.payload["email"],
+            "code": "123456",
+            "password": "short",
             "confirm_password": "short",
         })
 
@@ -535,15 +534,15 @@ class PublicUserApiTests(UserApiTestCase):
         """After a password reset every outstanding refresh token is blacklisted."""
         from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 
-        user     = create_user(email=self.payload["email"], password="oldpass123")
+        user = create_user(email=self.payload["email"], password="oldpass123")
         refresh1 = RefreshToken.for_user(user)
         refresh2 = RefreshToken.for_user(user)
         make_confirmation_token(user)
 
         self.client.post(RESET_PASSWORD_URL, {
-            "email":            self.payload["email"],
-            "code":             "123456",
-            "password":         "newpass123",
+            "email": self.payload["email"],
+            "code": "123456",
+            "password": "newpass123",
             "confirm_password": "newpass123",
         })
 
@@ -552,14 +551,14 @@ class PublicUserApiTests(UserApiTestCase):
 
     def test_old_refresh_token_rejected_after_password_reset(self):
         """A refresh attempt with a pre-reset token must return HTTP 401."""
-        user    = create_user(email=self.payload["email"], password="oldpass123")
+        user = create_user(email=self.payload["email"], password="oldpass123")
         refresh = RefreshToken.for_user(user)
         make_confirmation_token(user)
 
         self.client.post(RESET_PASSWORD_URL, {
-            "email":            self.payload["email"],
-            "code":             "123456",
-            "password":         "newpass123",
+            "email": self.payload["email"],
+            "code": "123456",
+            "password": "newpass123",
             "confirm_password": "newpass123",
         })
 

@@ -13,20 +13,11 @@ from .permissions import CanManageDepartment
 class ManageDepartmentAPIView(viewsets.ModelViewSet):
     """
     CRUD for departments scoped to the authenticated user's organization.
-
-    Permission:
-      - List / Retrieve: any active member (CanManageDepartment checks is_active
-        + role ≥ manager).
-      - Create / Update / Destroy: same gate — managers, admins, and owners.
-
-    If you need finer-grained separation (e.g. all active members can list,
-    only managers+ can write), split into two viewsets or override
-    get_permissions() per action.
     """
 
-    serializer_class       = serializers.DepartmentSerializer
+    serializer_class = serializers.DepartmentSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes     = [permissions.IsAuthenticated, CanManageDepartment]
+    permission_classes = [permissions.IsAuthenticated, CanManageDepartment]
 
     # Class-level queryset required by DRF router; get_queryset() narrows it.
     queryset = Department.objects.none()
@@ -41,8 +32,6 @@ class ManageDepartmentAPIView(viewsets.ModelViewSet):
             .order_by("-id")
             .distinct()
         )
-
-    # ── Create ─────────────────────────────────────────────────────────────────
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -60,7 +49,7 @@ class ManageDepartmentAPIView(viewsets.ModelViewSet):
     # ── Retrieve ───────────────────────────────────────────────────────────────
 
     def retrieve(self, request, *args, **kwargs):
-        instance   = self.get_object()
+        instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(
             {"ok": True, "message": "Department retrieved successfully.", "results": serializer.data}
@@ -70,7 +59,7 @@ class ManageDepartmentAPIView(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         kwargs["partial"] = True
-        instance   = self.get_object()
+        instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -84,7 +73,7 @@ class ManageDepartmentAPIView(viewsets.ModelViewSet):
     # ── List ───────────────────────────────────────────────────────────────────
 
     def list(self, request, *args, **kwargs):
-        queryset   = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
         return Response(
             {"ok": True, "results": serializer.data}
@@ -94,7 +83,7 @@ class ManageDepartmentAPIView(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        name     = instance.name
+        name = instance.name
         self.perform_destroy(instance)
         return Response(
             {"ok": True, "message": f"Department '{name}' deleted successfully."},

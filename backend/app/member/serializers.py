@@ -4,9 +4,9 @@ Serializers for Member API Views.
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from core.serializers import ProfileSerializer
 from department.models import Department
 from member.models import Member
+from user.serializers import ProfileSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,8 +23,20 @@ class DepartmentSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def validate_name(self, value):
-        organization = self.context["request"].user.member.organization
-        if not organization.department_set.filter(name=value).exists():
+        user = self.context["request"].user
+        organization = None
+        if hasattr(user, "organization") and user.organization is not None:
+            organization = user.organization
+        else:
+            try:
+                organization = user.member.organization
+            except Exception:
+                organization = None
+
+        if organization is None:
+            raise serializers.ValidationError("Requesting user is not associated with an organization.")
+
+        if not organization.departments.filter(name=value).exists():
             raise serializers.ValidationError(
                 f"{value} is not a valid department for {organization.name}."
             )
@@ -43,7 +55,19 @@ class DirectReportSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "name", "role"]
 
     def validate_email(self, value):
-        organization = self.context["request"].user.member.organization
+        user = self.context["request"].user
+        organization = None
+        if hasattr(user, "organization") and user.organization is not None:
+            organization = user.organization
+        else:
+            try:
+                organization = user.member.organization
+            except Exception:
+                organization = None
+
+        if organization is None:
+            raise serializers.ValidationError("Requesting user is not associated with an organization.")
+
         if not Member.objects.filter(organization=organization, email=value).exists():
             raise serializers.ValidationError(
                 f"No member with email {value} found in {organization.name}."
@@ -104,13 +128,27 @@ class ManageMemberSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         manager = attrs.get("manager")
         instance = getattr(self, "instance", None)
-        organization = self.context["request"].user.member.organization
+        user = self.context["request"].user
 
-        if manager and manager.organization != organization:
+        # Resolve organization from request user: prefer user.organization (org owner),
+        # fall back to user.member.organization if available.
+        organization = None
+        if hasattr(user, "organization") and user.organization is not None:
+            organization = user.organization
+        else:
+            try:
+                organization = user.member.organization
+            except Exception:
+                organization = None
+
+        if organization is None:
+            raise serializers.ValidationError("Requesting user is not associated with an organization.")
+
+        if manager and getattr(manager, "organization", None) != organization:
             raise serializers.ValidationError(
                 {"manager": "The manager must belong to the same organization."}
             )
-        if manager and instance and manager.pk == instance.pk:
+        if manager and instance and getattr(manager, "pk", None) == getattr(instance, "pk", None):
             raise serializers.ValidationError(
                 {"manager": "A member cannot be their own manager."}
             )
@@ -120,7 +158,19 @@ class ManageMemberSerializer(serializers.ModelSerializer):
         departments_data = validated_data.pop("departments", [])
         direct_reports_data = validated_data.pop("direct_reports", [])
 
-        organization = self.context["request"].user.member.organization
+        user = self.context["request"].user
+        organization = None
+        if hasattr(user, "organization") and user.organization is not None:
+            organization = user.organization
+        else:
+            try:
+                organization = user.member.organization
+            except Exception:
+                organization = None
+
+        if organization is None:
+            raise serializers.ValidationError("Requesting user is not associated with an organization.")
+
         member = Member.objects.create(organization=organization, **validated_data)
 
         self._set_departments(member, departments_data)

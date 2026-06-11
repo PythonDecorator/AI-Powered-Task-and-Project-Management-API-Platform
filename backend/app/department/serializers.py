@@ -17,7 +17,7 @@ class MemberRefSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        model  = Member
+        model = Member
         fields = ["id", "email", "name", "phone", "role", "skills"]
         read_only_fields = ["id", "name", "phone", "role", "skills"]
         extra_kwargs = {"email": {"required": True}}
@@ -26,7 +26,7 @@ class MemberRefSerializer(serializers.ModelSerializer):
         organization = self.context["request"].user.member.organization
         if not Member.objects.filter(organization=organization, email=value).exists():
             raise serializers.ValidationError(
-                f"No member with email '{value}' found in {organization.name}."
+                "No member with email '{value}' found in {organization.name}."
             )
         return value
 
@@ -40,47 +40,49 @@ class DepartmentSerializer(serializers.ModelSerializer):
     Both accept member objects identified by email; all other fields are read-only.
     """
     members = MemberRefSerializer(many=True, required=False)
-    head    = MemberRefSerializer(required=False, allow_null=True)
+    head = MemberRefSerializer(required=False, allow_null=True)
 
     class Meta:
-        model  = Department
+        model = Department
         fields = ["id", "name", "head", "members"]
         read_only_fields = ["id"]
 
-    # ── Create ─────────────────────────────────────────────────────────────────
+    # ── Create ──────────────────────────
 
     def create(self, validated_data):
         members_data = validated_data.pop("members", [])
-        head_data    = validated_data.pop("head", None)
+        head_data = validated_data.pop("head", None)
 
         organization = self.context["request"].user.member.organization
 
         # Uniqueness is enforced by the DB unique_together, but returning a
         # clear error message here is friendlier than a 500.
-        if Department.objects.filter(organization=organization, name=validated_data["name"]).exists():
+        if Department.objects.filter(organization=organization,
+                                     name=validated_data["name"]).exists():
             raise serializers.ValidationError(
-                f"A department named '{validated_data['name']}' already exists in this organization."
+                "A department named '{validated_data['name']}' "
+                "already exists in this organization."
             )
 
         head = None
         if head_data:
-            head = Member.objects.get(organization=organization, email=head_data["email"])
+            head = Member.objects.get(organization=organization,
+                                      email=head_data["email"])
 
         department = Department.objects.create(
             organization=organization, head=head, **validated_data
         )
 
         for member_data in members_data:
-            member = Member.objects.get(organization=organization, email=member_data["email"])
+            member = Member.objects.get(organization=organization,
+                                        email=member_data["email"])
             department.members.add(member)
 
         return department
 
-    # ── Update ─────────────────────────────────────────────────────────────────
-
     def update(self, instance, validated_data):
         members_data = validated_data.pop("members", None)
-        head_data    = validated_data.pop("head", None)
+        head_data = validated_data.pop("head", None)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
