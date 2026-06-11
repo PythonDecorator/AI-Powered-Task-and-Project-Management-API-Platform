@@ -3,9 +3,6 @@ import { useEffect} from "react";
 import {Outlet, useLocation} from "react-router-dom";
 import {ThemeProvider} from "@mui/material/styles";
 
-import "../../../assets/css/nucleo-icons.css";
-import "../../../assets/css/nucleo-svg.css";
-
 import themeDark from "../../../assets/theme-dark/index.js";
 import theme from "../../../assets/theme/index.js";
 

@@ -18,10 +18,12 @@ class Command(BaseCommand):
             )
             return
 
-        User.objects.create_superuser(
+        user = User.objects.create_superuser(
             email=email,
             password=password
         )
+        user.is_verified = True
+        user.save()
         self.stdout.write(
             self.style.SUCCESS(f'Superuser "{email}" created successfully!')
         )

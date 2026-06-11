@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { loginSchema } from './schema';
 import { createGradient, createNeonGlow } from '../../../assets/theme/utilities';
 
-const LoginForm = ({ onSubmit, isLoading = false, onDemoClick }) => {
+const LoginForm = ({ onSubmit, isLoading = false }) => {
   const form = useForm({
     defaultValues: {
       email: '',
@@ -215,25 +215,6 @@ const LoginForm = ({ onSubmit, isLoading = false, onDemoClick }) => {
           ) : (
             'Sign In'
           )}
-        </Button>
-
-        <Button
-          type="button"
-          fullWidth
-          variant="outlined"
-          onClick={onDemoClick}
-          sx={{
-            py: 1.5,
-            mb: 2,
-            borderColor: 'rgba(102, 126, 234, 0.5)',
-            color: '#667eea',
-            '&:hover': {
-              backgroundColor: 'rgba(102, 126, 234, 0.05)',
-              borderColor: '#667eea',
-            },
-          }}
-        >
-          Demo Mode 🎯
         </Button>
 
         <Box sx={{ textAlign: 'center' }}>
