@@ -1,6 +1,7 @@
 // Auth
 export const loginUrl = '/user/login/';
 export const logoutUrl = '/user/logout/';
+export const refreshTokenUrl = '/user/login/refresh/';
 
 // User
 export const getCurrentUserUrl = '/user/me/';
