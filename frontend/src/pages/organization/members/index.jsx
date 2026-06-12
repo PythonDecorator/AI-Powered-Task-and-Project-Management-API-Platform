@@ -14,7 +14,8 @@ import MembersAddModal from './MembersAddModal.jsx';
 import MembersEditModal from './MembersEditModal.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { useDeleteMember } from '../../../utils/hooks/useMembers.js';
-import { getMembers } from '../../../utils/apis.js';
+import { authorizedRequest } from '../../../utils/helpers/http.js';
+import { membersUrl } from '../../../utils/helpers/apiUrls.js';
 import CustomBox from '../../../components/CustomBox/index.jsx';
 import CustomButton from '../../../components/CustomButton/index.jsx';
 import CustomTypography from '../../../components/CustomTypography/index.jsx';
@@ -28,9 +29,9 @@ const MembersPage = () => {
   const [selectedMember, setSelectedMember] = useState(null);
 
   const { data: membersResponse, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['/member/'],
-    queryFn: getMembers,
-    staleTime: 10 * 60 * 1000, // 10 minutes - keep cached data fresh
+    queryKey: [membersUrl],
+    queryFn: ({ signal }) => authorizedRequest({ url: membersUrl, signal }),
+    staleTime: 10 * 60 * 1000,
   });
 
   const members = membersResponse?.data?.results || [];

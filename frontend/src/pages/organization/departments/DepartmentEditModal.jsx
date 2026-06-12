@@ -5,17 +5,18 @@ import CustomModal from '../../../components/CustomModal/index.jsx';
 import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { useUpdateDepartment } from '../../../utils/hooks/useDepartments.js';
-import { getMembers } from '../../../utils/apis.js';
+import { authorizedRequest } from '../../../utils/helpers/http.js';
+import { membersUrl } from '../../../utils/helpers/apiUrls.js';
 
 const DepartmentEditModal = ({ department, onSuccess }) => {
   const { onCloseModal } = useContext(ModalContext);
   const updateMutation = useUpdateDepartment();
 
-  // Fetch members with proper caching
+  // Fetch members data using authorizedRequest pattern
   const { data: membersResponse } = useQuery({
-    queryKey: ['/member/'],
-    queryFn: getMembers,
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    queryKey: [membersUrl],
+    queryFn: ({ signal }) => authorizedRequest({ url: membersUrl, signal }),
+    staleTime: 10 * 60 * 1000,
   });
 
   const allMembers = membersResponse?.data?.results || [];

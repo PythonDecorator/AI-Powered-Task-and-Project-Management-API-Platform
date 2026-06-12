@@ -25,7 +25,7 @@ const MembersEditModal = ({ member, onSuccess }) => {
       label: 'Email',
       placeholder: 'john@company.com',
       required: true,
-      disabled: true, // Email shouldn't be editable
+      disabled: true,
     },
     working: {
       value: member?.working || 'Full-time',

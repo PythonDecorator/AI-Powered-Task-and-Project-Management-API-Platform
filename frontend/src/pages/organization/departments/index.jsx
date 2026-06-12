@@ -14,7 +14,8 @@ import DepartmentAddModal from './DepartmentAddModal.jsx';
 import DepartmentEditModal from './DepartmentEditModal.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { useDeleteDepartment } from '../../../utils/hooks/useDepartments.js';
-import { getDepartments } from '../../../utils/apis.js';
+import { authorizedRequest } from '../../../utils/helpers/http.js';
+import { departmentsUrl } from '../../../utils/helpers/apiUrls.js';
 import CustomBox from '../../../components/CustomBox/index.jsx';
 import CustomButton from '../../../components/CustomButton/index.jsx';
 import CustomTypography from '../../../components/CustomTypography/index.jsx';
@@ -28,9 +29,9 @@ const DepartmentsPage = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const { data: departmentsResponse, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['/department/'],
-    queryFn: getDepartments,
-    staleTime: 10 * 60 * 1000, // 10 minutes - keep cached data fresh
+    queryKey: [departmentsUrl],
+    queryFn: ({ signal }) => authorizedRequest({ url: departmentsUrl, signal }),
+    staleTime: 10 * 60 * 1000,
   });
 
   const departments = departmentsResponse?.data?.results || [];

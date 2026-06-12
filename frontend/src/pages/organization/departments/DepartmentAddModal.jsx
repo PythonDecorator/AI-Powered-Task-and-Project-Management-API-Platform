@@ -1,21 +1,22 @@
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import CustomModal from '../../../components/CustomModal/index.jsx';
 import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { useCreateDepartment } from '../../../utils/hooks/useDepartments.js';
-import { getMembers } from '../../../utils/apis.js';
+import { authorizedRequest } from '../../../utils/helpers/http.js';
+import { membersUrl } from '../../../utils/helpers/apiUrls.js';
 
 const DepartmentAddModal = ({ onSuccess }) => {
   const { onCloseModal } = useContext(ModalContext);
   const createMutation = useCreateDepartment();
 
-  // Fetch members with proper caching
+  // Fetch members data using authorizedRequest pattern
   const { data: membersResponse } = useQuery({
-    queryKey: ['/member/'],
-    queryFn: getMembers,
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    queryKey: [membersUrl],
+    queryFn: ({ signal }) => authorizedRequest({ url: membersUrl, signal }),
+    staleTime: 10 * 60 * 1000,
   });
 
   const allMembers = membersResponse?.data?.results || [];
