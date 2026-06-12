@@ -1,5 +1,5 @@
-import { redirect } from 'react-router-dom';
-import { jwtDecode } from "jwt-decode";
+import {redirect} from 'react-router-dom';
+import {jwtDecode} from "jwt-decode";
 import Cookies from 'js-cookie';
 
 export function getTokenDuration() {
@@ -23,17 +23,10 @@ export function getAuthToken() {
         return null;
     }
 
-    try {
-        const decodedToken = jwtDecode(token);
-        const expTime = decodedToken.exp * 1000;
-        const now = Date.now();
-        if (expTime - now <= 0) {
-            return 'EXPIRED';
-        }
-    } catch (error) {
-        console.error("Error decoding token:", error);
-        return 'EXPIRED';
-    }
+    // const remainingTime = getTokenDuration();
+    // if (remainingTime <= 0) {
+    //     return 'EXPIRED';
+    // }
 
     return token;
 }

@@ -69,12 +69,20 @@ const CustomFormInput = forwardRef(({
           '& .MuiOutlinedInput-root': {
             backgroundColor: 'rgba(102, 126, 234, 0.05)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            borderRadius: '8px',
             '&:hover': {
               backgroundColor: 'rgba(102, 126, 234, 0.08)',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: hasError ? '#f44336' : 'rgba(102, 126, 234, 0.3)',
+              },
             },
             '&.Mui-focused': {
               backgroundColor: 'rgba(102, 126, 234, 0.1)',
               boxShadow: `0 0 0 3px rgba(102, 126, 234, 0.15)`,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: hasError ? '#f44336' : 'rgba(102, 126, 234, 0.5)',
+                borderWidth: 2,
+              },
             },
             '&.Mui-error': {
               backgroundColor: 'rgba(244, 67, 54, 0.05)',
@@ -84,10 +92,12 @@ const CustomFormInput = forwardRef(({
             },
             '&.Mui-disabled': {
               backgroundColor: 'rgba(102, 126, 234, 0.03)',
+              opacity: 0.7,
             },
           },
           '& .MuiOutlinedInput-input': {
             color: 'text.primary',
+            fontSize: '0.95rem',
             '&::placeholder': {
               color: 'text.secondary',
               opacity: 0.6,
@@ -95,10 +105,14 @@ const CustomFormInput = forwardRef(({
           },
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: hasError ? '#f44336' : 'rgba(102, 126, 234, 0.2)',
+            borderWidth: 1,
+            transition: 'all 0.3s ease',
           },
           '& .MuiFormHelperText-root': {
             color: hasError ? '#f44336' : 'text.secondary',
             marginTop: '6px',
+            fontSize: '0.75rem',
+            fontWeight: 500,
           },
           ...sx,
         }}

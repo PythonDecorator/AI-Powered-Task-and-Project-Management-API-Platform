@@ -11,6 +11,8 @@ const LoginPage = lazy(() => import("./pages/authentication/login/index.jsx"));
 
 // Lazy load dashboard pages
 const Dashboard = lazy(() => import("./pages/dashboard/index.jsx"));
+const DepartmentsPage = lazy(() => import("./pages/organization/departments/index.jsx"));
+const MembersPage = lazy(() => import("./pages/organization/members/index.jsx"));
 
 
 
@@ -22,6 +24,7 @@ const router = createBrowserRouter([
         loader: checkAuthLoader,
         children: [
             {index: true, element: SuspenseWrapper(LoginPage)},
+            {path: "login", element: SuspenseWrapper(LoginPage)},
         ],
     },
     {
@@ -30,7 +33,8 @@ const router = createBrowserRouter([
         loader: protectedAuthLoader,
         children: [
             {index: true, element: SuspenseWrapper(Dashboard)},
-
+            {path: "departments", element: SuspenseWrapper(DepartmentsPage)},
+            {path: "members", element: SuspenseWrapper(MembersPage)},
         ],
     },
 ]);

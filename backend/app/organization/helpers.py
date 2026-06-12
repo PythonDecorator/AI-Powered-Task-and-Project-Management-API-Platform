@@ -14,11 +14,26 @@ def create_owner_member_account(organization):
 
     user = organization.user
 
+    # Compute a display name for the owner user. Some custom User models may
+    # expose a `name` attribute (single-field), or implement get_full_name().
+    # Fall back to email or the organization name when needed.
+    display_name = None
+    if hasattr(user, "name") and getattr(user, "name"):
+        display_name = user.name
+    else:
+        try:
+            full_name = user.get_full_name()
+        except Exception:
+            first = getattr(user, "first_name", "") or ""
+            last = getattr(user, "last_name", "") or ""
+            full_name = (f"{first} {last}".strip()) or None
+        display_name = full_name or getattr(user, "email", None) or organization.name
+
     member_record, _ = Member.objects.get_or_create(
         organization=organization,
         user=user,
         defaults={
-            "name": user.get_full_name() or organization.name,
+            "name": display_name,
             "email": user.email,
             "salary": 0.00,
             "role": "owner",

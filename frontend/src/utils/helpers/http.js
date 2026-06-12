@@ -1,12 +1,12 @@
-import {QueryClient} from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Cookies from "js-cookie";
 
 // Initialize Query Client
 export const queryClient = new QueryClient();
 
-// Define API base URL
-const apiBaseUrl = "";
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const apiBaseUrl = API_BASE_URL;
 
 const api = axios.create({
     baseURL: apiBaseUrl,
@@ -19,7 +19,7 @@ const api = axios.create({
 api.interceptors.request.use(
     async (config) => {
         if (config.isAuthorized) {
-            const token = Cookies.get("oneupaiToken");
+            const token = Cookies.get("hitchpayToken");
             if (token) {
                 config.headers["Authorization"] = `Bearer ${token}`;
             }
@@ -37,13 +37,13 @@ const refreshAccessToken = async () => {
             throw new Error("No refresh token found.");
         }
 
-        const response = await axios.post(`${apiBaseUrl}/refresh-token`, {refreshToken});
+        const response = await axios.post(`${apiBaseUrl}/refresh-token`, { refreshToken });
 
         if (response.data?.status) {
             const newAccessToken = response.data.accessToken;
 
             // Store the new token in cookies
-            Cookies.set("oneupaiToken", newAccessToken, {
+            Cookies.set("access_token", newAccessToken, {
                 expires: 1, // 1 day
                 secure: true,
                 sameSite: "Strict",
@@ -62,7 +62,7 @@ const refreshAccessToken = async () => {
 
 // Logout function (if refresh fails)
 const handleLogout = () => {
-    Cookies.remove("oneupaiToken");
+    Cookies.remove("access_token");
     Cookies.remove("refreshToken");
     localStorage.removeItem("adminDetails");
     window.location.href = "/"; // Redirect user to login
@@ -94,7 +94,7 @@ api.interceptors.response.use(
 );
 
 // Function to build query parameters
-const buildParams = ({searchTerm, page, ordering, status, role, is_active}) => {
+const buildParams = ({ searchTerm, page, ordering, status, role, is_active }) => {
     const params = new URLSearchParams();
     if (searchTerm) params.append("search", searchTerm);
     if (page !== undefined) params.append("page", page.toString());
@@ -120,7 +120,7 @@ const makeRequest = async ({
                                isAuthorized = false, // By default, no token is included
                            }) => {
     try {
-        const params = buildParams({searchTerm, page, ordering, status, role, is_active});
+        const params = buildParams({ searchTerm, page, ordering, status, role, is_active });
         const config = {
             url,
             method,
@@ -145,7 +145,7 @@ const makeRequest = async ({
 
 // Functions for different types of requests
 export const authorizedRequest = async (options) =>
-    makeRequest({...options, isAuthorized: true});
+    makeRequest({ ...options, isAuthorized: true });
 
 export const unAuthorizedRequest = async (options) =>
-    makeRequest({...options, isAuthorized: false}); // No token included
+    makeRequest({ ...options, isAuthorized: false }); // No token included

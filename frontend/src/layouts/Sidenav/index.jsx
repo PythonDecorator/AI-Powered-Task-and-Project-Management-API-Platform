@@ -18,6 +18,7 @@ const Sidenav = ({ color, brand, brandName }) => {
     { label: 'Dashboard', icon: '📊', path: '/dashboard' },
     { label: 'Tasks', icon: '✓', path: '/tasks' },
     { label: 'Projects', icon: '📁', path: '/projects' },
+    { label: 'Departments', icon: '🏢', path: '/dashboard/departments' },
   ];
 
   return (
