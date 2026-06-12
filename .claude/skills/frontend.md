@@ -9,14 +9,13 @@
 - **Hooks**: Co-locate page-specific hooks in page folders · keep shared hooks in `utils/hooks/`
   - Example: `dashboard/useCurrentUser.js` for dashboard-only hook
   - Shared: `useDepartments()`, `useMembers()`, `useLogin()` in `utils/hooks/`
-- **Components**: Use smart component selection:
-  - `CustomBox` for major page-level containers, consistent spacing
-  - `CustomButton` for primary actions, important CTAs
-  - `CustomTypography` for headers, labels, brand text
-  - `CustomModal` for ALL modals
-  - `GeneralForm` for ALL forms with validation
-  - `DeleteConfirmDialog` for delete confirmations
-  - Standard MUI for internal layout, TextField, Grid, etc.
+- **Components**: Use direct MUI components by default, reserve Custom* for specific needs
+  - **Standard MUI** (`Box`, `Typography`, `Button`, `Grid`, `Card`, etc.) - primary choice for all layouts
+  - `CustomModal` - for ALL modals
+  - `GeneralForm` - for ALL forms with validation
+  - `DeleteConfirmDialog` - for delete confirmations
+  - `Loading`, `ErrorMessage` - for state feedback
+  - Avoid unnecessary component wrapping
 - **Form building**: Use `GeneralForm` component with inline schemas (Zod validation)
 - **Modal pattern**: Use `CustomModal` + `GeneralForm` inside, managed via `ModalContext`
 - **State management**: Page handles data (useQuery), Modal handles forms (GeneralForm), Page passes `refetch` callback
