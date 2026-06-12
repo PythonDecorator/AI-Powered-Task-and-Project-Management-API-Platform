@@ -1,5 +1,6 @@
 import { useContext, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Box, Typography, Button } from '@mui/material';
 import DashboardLayout from '../../../layouts/LayoutContainers/DashboardLayout/index.jsx';
 import DepartmentAddModal from './DepartmentAddModal.jsx';
 import DepartmentEditModal from './DepartmentEditModal.jsx';
@@ -7,9 +8,6 @@ import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { useDeleteDepartment } from '../../../utils/hooks/useDepartments.js';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { departmentsUrl } from '../../../utils/helpers/apiUrls.js';
-import CustomBox from '../../../components/CustomBox/index.jsx';
-import CustomButton from '../../../components/CustomButton/index.jsx';
-import CustomTypography from '../../../components/CustomTypography/index.jsx';
 import Loading from '../../../components/Loading/index.jsx';
 import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
 import DeleteConfirmDialog from '../../../components/DeleteConfirmDialog/index.jsx';
@@ -65,7 +63,7 @@ const DepartmentsPage = () => {
     );
   } else {
     content = (
-      <CustomBox
+      <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -75,39 +73,39 @@ const DepartmentsPage = () => {
           gap: 2,
         }}
       >
-        <CustomTypography variant="h6" sx={{ color: 'text.secondary' }}>
+        <Typography variant="h6" sx={{ color: 'text.secondary' }}>
           No departments yet
-        </CustomTypography>
-        <CustomButton variant="contained" onClick={handleAddClick}>
+        </Typography>
+        <Button variant="contained" onClick={handleAddClick}>
           Create First Department
-        </CustomButton>
-      </CustomBox>
+        </Button>
+      </Box>
     );
   }
 
   return (
     <DashboardLayout>
-      <CustomBox sx={{ mb: 4 }}>
-        <CustomBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <CustomBox>
-            <CustomTypography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
               Departments
-            </CustomTypography>
-            <CustomTypography variant="body2" sx={{ color: 'text.secondary' }}>
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Manage your organization's departments
-            </CustomTypography>
-          </CustomBox>
+            </Typography>
+          </Box>
           {departments.length > 0 && (
-            <CustomButton variant="contained" onClick={handleAddClick}>
+            <Button variant="contained" onClick={handleAddClick}>
               + New Department
-            </CustomButton>
+            </Button>
           )}
-        </CustomBox>
-      </CustomBox>
+        </Box>
+      </Box>
 
-      <CustomBox sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4 }}>
         {content}
-      </CustomBox>
+      </Box>
 
       <DepartmentAddModal onSuccess={refetch} />
       {selectedDepartment && <DepartmentEditModal department={selectedDepartment} onSuccess={refetch} />}

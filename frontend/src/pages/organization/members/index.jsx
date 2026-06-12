@@ -1,5 +1,6 @@
 import { useContext, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Box, Typography, Button } from '@mui/material';
 import DashboardLayout from '../../../layouts/LayoutContainers/DashboardLayout/index.jsx';
 import MembersAddModal from './MembersAddModal.jsx';
 import MembersEditModal from './MembersEditModal.jsx';
@@ -7,9 +8,6 @@ import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { useDeleteMember } from '../../../utils/hooks/useMembers.js';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { membersUrl } from '../../../utils/helpers/apiUrls.js';
-import CustomBox from '../../../components/CustomBox/index.jsx';
-import CustomButton from '../../../components/CustomButton/index.jsx';
-import CustomTypography from '../../../components/CustomTypography/index.jsx';
 import Loading from '../../../components/Loading/index.jsx';
 import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
 import DeleteConfirmDialog from '../../../components/DeleteConfirmDialog/index.jsx';
@@ -65,7 +63,7 @@ const MembersPage = () => {
     );
   } else {
     content = (
-      <CustomBox
+      <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -75,39 +73,39 @@ const MembersPage = () => {
           gap: 2,
         }}
       >
-        <CustomTypography variant="h6" sx={{ color: 'text.secondary' }}>
+        <Typography variant="h6" sx={{ color: 'text.secondary' }}>
           No members yet
-        </CustomTypography>
-        <CustomButton variant="contained" onClick={handleAddClick}>
+        </Typography>
+        <Button variant="contained" onClick={handleAddClick}>
           Add First Member
-        </CustomButton>
-      </CustomBox>
+        </Button>
+      </Box>
     );
   }
 
   return (
     <DashboardLayout>
-      <CustomBox sx={{ mb: 4 }}>
-        <CustomBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <CustomBox>
-            <CustomTypography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
               Members
-            </CustomTypography>
-            <CustomTypography variant="body2" sx={{ color: 'text.secondary' }}>
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Manage your organization's team members
-            </CustomTypography>
-          </CustomBox>
+            </Typography>
+          </Box>
           {members.length > 0 && (
-            <CustomButton variant="contained" onClick={handleAddClick}>
+            <Button variant="contained" onClick={handleAddClick}>
               + New Member
-            </CustomButton>
+            </Button>
           )}
-        </CustomBox>
-      </CustomBox>
+        </Box>
+      </Box>
 
-      <CustomBox sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4 }}>
         {content}
-      </CustomBox>
+      </Box>
 
       <MembersAddModal onSuccess={refetch} />
       {selectedMember && <MembersEditModal member={selectedMember} onSuccess={refetch} />}
