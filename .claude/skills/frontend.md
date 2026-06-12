@@ -2,25 +2,24 @@
 
 ## Structure
 - `main.jsx` mount only · `App.jsx` providers only · `src/store/` UI state via Context · server state in TanStack Query only
-- Components: `src/components/` (Custom* primitives) · `src/examples/` (composites) · `src/pages/{feature}/` (pages + sub-components) · Max file length: 400 lines — split into sub-components or hooks if exceeded
+- Components: `src/components/` (Custom* primitives) · `src/examples/` (composites) · `src/pages/{feature}/` (pages + sub-components) · Max file length: 400 lines — split into subcomponents or hooks if exceeded
 - Routing: wrap every page in a layout from `src/layouts/` · always update `src/router.jsx`
 
-## Component Management Strategy (CRITICAL)
-- **Always use Custom* components**: CustomBox, CustomButton, CustomTypography, CustomModal, CustomInputAutocomplete, CustomFormInput
-- **Never use raw MUI Box**: Use `CustomBox` for all layout containers
-- **Never use raw HTML div**: Use `CustomBox` instead
+## Component & Hook Strategy
+- **Hooks**: Co-locate page-specific hooks in page folders · keep shared hooks in `utils/hooks/`
+  - Example: `dashboard/useCurrentUser.js` for dashboard-only hook
+  - Shared: `useDepartments()`, `useMembers()`, `useLogin()` in `utils/hooks/`
+- **Components**: Use smart component selection:
+  - `CustomBox` for major page-level containers, consistent spacing
+  - `CustomButton` for primary actions, important CTAs
+  - `CustomTypography` for headers, labels, brand text
+  - `CustomModal` for ALL modals
+  - `GeneralForm` for ALL forms with validation
+  - `DeleteConfirmDialog` for delete confirmations
+  - Standard MUI for internal layout, TextField, Grid, etc.
 - **Form building**: Use `GeneralForm` component with inline schemas (Zod validation)
 - **Modal pattern**: Use `CustomModal` + `GeneralForm` inside, managed via `ModalContext`
 - **State management**: Page handles data (useQuery), Modal handles forms (GeneralForm), Page passes `refetch` callback
-- **Import pattern**: 
-  ```jsx
-  // Components
-  import CustomBox from '../../../components/CustomBox/index.jsx';
-  import CustomButton from '../../../components/CustomButton/index.jsx';
-  import CustomTypography from '../../../components/CustomTypography/index.jsx';
-  
-  // Never import raw MUI for Box/Button/Typography
-  ```
 
 ## HTTP & Authentication
 - **All API calls via `http.js`**: Use `authorizedRequest()` or `unAuthorizedRequest()` based on endpoint
