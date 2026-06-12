@@ -9,7 +9,7 @@ import QueryContextProvider from "./store/context/QueryParamsContextProvider.jsx
 import {useController, ControllerProvider} from "./store/context/index.jsx";
 import lightTheme from "./assets/theme/index.js";
 import darkTheme from "./assets/theme-dark/index.js";
-import {queryClient} from "./utils/apis.js";
+import {queryClient} from "./utils/helpers/http.js";
 
 const AppContent = () => {
     const [controller] = useController();
