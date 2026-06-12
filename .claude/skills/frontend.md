@@ -5,6 +5,31 @@
 - Components: `src/components/` (Custom* primitives) · `src/examples/` (composites) · `src/pages/{feature}/` (pages + sub-components) · Max file length: 400 lines — split into sub-components or hooks if exceeded
 - Routing: wrap every page in a layout from `src/layouts/` · always update `src/router.jsx`
 
+## Component Management Strategy (CRITICAL)
+- **Always use Custom* components**: CustomBox, CustomButton, CustomTypography, CustomModal, CustomInputAutocomplete, CustomFormInput
+- **Never use raw MUI Box**: Use `CustomBox` for all layout containers
+- **Never use raw HTML div**: Use `CustomBox` instead
+- **Form building**: Use `GeneralForm` component with inline schemas (Zod validation)
+- **Modal pattern**: Use `CustomModal` + `GeneralForm` inside, managed via `ModalContext`
+- **State management**: Page handles data (useQuery), Modal handles forms (GeneralForm), Page passes `refetch` callback
+- **Import pattern**: 
+  ```jsx
+  // Components
+  import CustomBox from '../../../components/CustomBox/index.jsx';
+  import CustomButton from '../../../components/CustomButton/index.jsx';
+  import CustomTypography from '../../../components/CustomTypography/index.jsx';
+  
+  // Never import raw MUI for Box/Button/Typography
+  ```
+
+## HTTP & Authentication
+- **All API calls via `http.js`**: Use `authorizedRequest({ url, method, payload, signal })`
+- **URLs centralized in `apiUrls.js`**: Import URLs, never hardcode `/api/v1/...`
+- **Auth helpers in `auth.js`**: setTokens(), clearAuth(), getAuthToken(), protectedAuthLoader()
+- **Hooks pattern**: useMembers(), useDepartments(), useLogin(), useLogout() — all use authorizedRequest
+- **Query pattern**: `useQuery({ queryKey: [url], queryFn: ({ signal }) => authorizedRequest({ url, signal }) })`
+- **Mutation pattern**: `useMutation({ mutationFn: (data) => authorizedRequest({ url, method: 'POST', payload: data }) })`
+
 ## Design System: Elegant, Gradient & Neon
 - **Foundation**: MUI 5+ with Material Design 3 + custom theme for premium aesthetic
 - **Gradients**: Use CSS `linear-gradient()` or `radial-gradient()` in `sx` prop for backgrounds, borders, text effects
@@ -23,18 +48,17 @@
 - Responsive mobile-first: `@media(max-width:600px)` + `@media(max-width:960px)`
 - **Premium Touches**: Subtle backdrop-filter blur on modals · layered shadows for depth · gradient borders on premium cards
 
-## MUI MCP Integration
-- **Query Tool**: Use `@mui/mcp` for accurate component documentation, customization guides, and implementation examples
-- **When to Use**: Complex customizations, custom component variants, theme extensions, accessibility requirements
-- **Command**: `claude mcp add mui-mcp -- npx -y @mui/mcp@latest` (already configured)
-- **Available Tools**: list_components, get_component_info, search_components, get_customization_guide, get_setup_guide, get_mui_guide
+## Forms & Tables
+- **Forms**: GeneralForm component + inline schema with Zod validation + fieldProps for field-specific options
+- **Form sections**: Group related fields via `sections` prop: `{ 'Personal Info': ['name', 'email'], 'Work': ['salary', 'role'] }`
+- **Tables**: SimpleTable or DataGridTable components, receive `data` and `onEdit`/`onDelete` callbacks
+- **Modal forms**: Modals use GeneralForm directly, handle submission, call `onSuccess?.()` to trigger parent `refetch()`
+- **Dynamic options**: Use `onChangeListener` in schema to fetch dependent data (e.g., members dropdown updates when department changes)
 
 ## Data & API
-- All axios calls exported from `src/utils/apis.js` — never raw axios in components
-- TanStack Query only — no `useEffect` for fetching · wrap in custom hooks in `hooks/`
-- Invalidate query keys on every successful mutation
-
-## Forms & Tables
-- Every form has `schema.js` (zod/yup) + react-hook-form · modals via `CustomModal` + global context
-- All tables via `@tanstack/react-table` mapped to custom theme components
-- Form inputs: gradient borders on focus · smooth label animation · neon success/error states
+- **API client**: `http.js` with axios + interceptors for token management
+- **URL management**: All endpoints in `apiUrls.js` — import and use
+- **TanStack Query**: All server state via useQuery/useMutation — never useEffect for fetching
+- **Custom hooks**: Wrap mutations/queries in hooks (useMembers, useDepartments, useCreateMember, etc.)
+- **Signal handling**: Always pass `{ signal }` to queryFn for proper cancellation
+- **Refetching**: Page passes `refetch` callback to modals via `onSuccess` prop

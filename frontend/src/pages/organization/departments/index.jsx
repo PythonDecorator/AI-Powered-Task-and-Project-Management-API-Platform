@@ -1,14 +1,5 @@
 import { useContext, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  CircularProgress,
-  Typography,
-} from '@mui/material';
 import DashboardLayout from '../../../layouts/LayoutContainers/DashboardLayout/index.jsx';
 import DepartmentAddModal from './DepartmentAddModal.jsx';
 import DepartmentEditModal from './DepartmentEditModal.jsx';
@@ -21,6 +12,7 @@ import CustomButton from '../../../components/CustomButton/index.jsx';
 import CustomTypography from '../../../components/CustomTypography/index.jsx';
 import Loading from '../../../components/Loading/index.jsx';
 import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
+import DeleteConfirmDialog from '../../../components/DeleteConfirmDialog/index.jsx';
 import DepartmentTable from './DepartmentTable.jsx';
 
 const DepartmentsPage = () => {
@@ -97,14 +89,14 @@ const DepartmentsPage = () => {
     <DashboardLayout>
       <CustomBox sx={{ mb: 4 }}>
         <CustomBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <div>
+          <CustomBox>
             <CustomTypography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
               Departments
             </CustomTypography>
             <CustomTypography variant="body2" sx={{ color: 'text.secondary' }}>
               Manage your organization's departments
             </CustomTypography>
-          </div>
+          </CustomBox>
           {departments.length > 0 && (
             <CustomButton variant="contained" onClick={handleAddClick}>
               + New Department
@@ -120,25 +112,14 @@ const DepartmentsPage = () => {
       <DepartmentAddModal onSuccess={refetch} />
       {selectedDepartment && <DepartmentEditModal department={selectedDepartment} onSuccess={refetch} />}
 
-      <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>
-        <DialogTitle>Delete Department</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete <strong>{deleteConfirm?.name}</strong>? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-          <Button
-            onClick={handleDelete}
-            color="error"
-            variant="contained"
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? <CircularProgress size={20} /> : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteConfirmDialog
+        open={!!deleteConfirm}
+        title="Delete Department"
+        itemName={deleteConfirm?.name || ''}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirm(null)}
+        isLoading={deleteMutation.isPending}
+      />
     </DashboardLayout>
   );
 };
