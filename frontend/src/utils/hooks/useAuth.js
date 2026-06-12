@@ -1,16 +1,17 @@
 import { useMutation } from '@tanstack/react-query';
-import { authorizedRequest } from '../helpers/http.js';
+import { authorizedRequest, unAuthorizedRequest } from '../helpers/http.js';
 import { loginUrl, logoutUrl } from '../helpers/apiUrls.js';
 import { setTokens, clearAuth } from '../helpers/auth.js';
 
 /**
  * Hook for user login
+ * Uses unAuthorizedRequest (no token needed for login)
  * Stores tokens in cookies on success
  */
 export const useLogin = () => {
   return useMutation({
     mutationFn: (credentials) =>
-      authorizedRequest({
+      unAuthorizedRequest({
         url: loginUrl,
         method: 'POST',
         payload: credentials,
@@ -29,6 +30,7 @@ export const useLogin = () => {
 
 /**
  * Hook for user logout
+ * Uses authorizedRequest (needs token to logout)
  * Clears all auth data
  */
 export const useLogout = () => {

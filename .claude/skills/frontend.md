@@ -23,12 +23,30 @@
   ```
 
 ## HTTP & Authentication
-- **All API calls via `http.js`**: Use `authorizedRequest({ url, method, payload, signal })`
+- **All API calls via `http.js`**: Use `authorizedRequest()` or `unAuthorizedRequest()` based on endpoint
+- **authorizedRequest()**: For endpoints requiring Bearer token (list, create, update, delete, logout, get-me)
+  ```jsx
+  const { data } = useQuery({
+    queryKey: [url],
+    queryFn: ({ signal }) => authorizedRequest({ url, signal }),
+  });
+  ```
+- **unAuthorizedRequest()**: For public endpoints (login, register, refresh-token, forgot-password)
+  ```jsx
+  const loginMutation = useMutation({
+    mutationFn: (credentials) => unAuthorizedRequest({ 
+      url: loginUrl, 
+      method: 'POST', 
+      payload: credentials 
+    }),
+  });
+  ```
 - **URLs centralized in `apiUrls.js`**: Import URLs, never hardcode `/api/v1/...`
 - **Auth helpers in `auth.js`**: setTokens(), clearAuth(), getAuthToken(), protectedAuthLoader()
-- **Hooks pattern**: useMembers(), useDepartments(), useLogin(), useLogout() — all use authorizedRequest
-- **Query pattern**: `useQuery({ queryKey: [url], queryFn: ({ signal }) => authorizedRequest({ url, signal }) })`
-- **Mutation pattern**: `useMutation({ mutationFn: (data) => authorizedRequest({ url, method: 'POST', payload: data }) })`
+- **Hooks pattern**: useMembers(), useDepartments(), useLogin(), useLogout() — use appropriate request function
+- **Decision rule**:
+  - ✅ authorizedRequest: GET, PATCH, DELETE, POST (private) — anything needing token
+  - ✅ unAuthorizedRequest: POST (login), POST (register), POST (refresh-token) — public endpoints
 
 ## Design System: Elegant, Gradient & Neon
 - **Foundation**: MUI 5+ with Material Design 3 + custom theme for premium aesthetic
