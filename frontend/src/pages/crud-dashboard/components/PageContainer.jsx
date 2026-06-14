@@ -38,7 +38,7 @@ export default function PageContainer(props) {
   return (
     <Container sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <Stack sx={{ flex: 1, my: 2 }} spacing={2}>
-        
+        <PageContentHeader>
           <PageHeaderBreadcrumbs
             aria-label="breadcrumb"
             separator={<NavigateNextRoundedIcon fontSize="small" />}
@@ -66,11 +66,12 @@ export default function PageContainer(props) {
                 })
               : null}
           </PageHeaderBreadcrumbs>
-          
+          <PageHeaderToolbar>
             {title ? <Typography variant="h4">{title}</Typography> : null}
-            {actions}</PageHeaderToolbar>
-          </PageContentHeader>
-        </Stack>
+            {actions}
+          </PageHeaderToolbar>
+        </PageContentHeader>
+      </Stack>
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {children}
         </Box>
