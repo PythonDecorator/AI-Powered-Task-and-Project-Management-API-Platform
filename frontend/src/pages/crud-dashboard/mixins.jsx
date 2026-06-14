@@ -1,6 +1,4 @@
-import { type Theme } from '@mui/material/styles';
-
-function getReducedMotionStyles(theme: Theme, transition: string) {
+function getReducedMotionStyles(theme, transition) {
   return {
     transition: theme.motion.reducedMotion === 'always' ? 'none' : transition,
     '@media (prefers-reduced-motion: reduce)': {
@@ -12,8 +10,8 @@ function getReducedMotionStyles(theme: Theme, transition: string) {
   };
 }
 
-export default function mixins(isExpanded: boolean, property: string) {
-  return (theme: Theme) =>
+export default function mixins(isExpanded, property) {
+  return (theme) =>
     getReducedMotionStyles(
       theme,
       theme.transitions.create(property, {

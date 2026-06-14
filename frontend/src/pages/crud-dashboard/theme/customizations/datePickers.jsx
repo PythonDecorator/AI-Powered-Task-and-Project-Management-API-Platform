@@ -1,12 +1,12 @@
-import { alpha, Theme } from '@mui/material/styles';
-import type { PickersProComponents } from '@mui/x-date-pickers-pro/themeAugmentation';
-import type { PickerComponents } from '@mui/x-date-pickers/themeAugmentation';
+import { alpha } from '@mui/material/styles';
+
+
 import { menuItemClasses } from '@mui/material/MenuItem';
 import { pickerDayClasses, yearCalendarClasses } from '@mui/x-date-pickers';
 import { gray, brand } from '../../../shared-theme/themePrimitives';
 
 /* eslint-disable import/prefer-default-export */
-export const datePickersCustomizations: PickersProComponents<Theme> & PickerComponents<Theme> = {
+export const datePickersCustomizations = {
   MuiPickerPopper: {
     styleOverrides: {
       paper: ({ theme }) => ({

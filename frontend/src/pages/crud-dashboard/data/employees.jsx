@@ -1,17 +1,4 @@
-import type { GridFilterModel, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
-
-type EmployeeRole = 'Market' | 'Finance' | 'Development';
-
-export interface Employee {
-  id: number;
-  name: string;
-  age: number;
-  joinDate: string;
-  role: EmployeeRole;
-  isFullTime: boolean;
-}
-
-const INITIAL_EMPLOYEES_STORE: Employee[] = [
+const INITIAL_EMPLOYEES_STORE = [
   {
     id: 1,
     name: 'Edward Perry',
@@ -38,12 +25,12 @@ const INITIAL_EMPLOYEES_STORE: Employee[] = [
   },
 ];
 
-export function getEmployeesStore(): Employee[] {
+export function getEmployeesStore() {
   const stringifiedEmployees = localStorage.getItem('employees-store');
   return stringifiedEmployees ? JSON.parse(stringifiedEmployees) : INITIAL_EMPLOYEES_STORE;
 }
 
-export function setEmployeesStore(employees: Employee[]) {
+export function setEmployeesStore(employees) {
   return localStorage.setItem('employees-store', JSON.stringify(employees));
 }
 
@@ -51,11 +38,7 @@ export async function getMany({
   paginationModel,
   filterModel,
   sortModel,
-}: {
-  paginationModel: GridPaginationModel;
-  sortModel: GridSortModel;
-  filterModel: GridFilterModel;
-}): Promise<{ items: Employee[]; itemCount: number }> {
+}) {
   const employeesStore = getEmployeesStore();
 
   let filteredEmployees = [...employeesStore];
@@ -68,7 +51,7 @@ export async function getMany({
       }
 
       filteredEmployees = filteredEmployees.filter((employee) => {
-        const employeeValue = employee[field as keyof Employee];
+        const employeeValue = employee[field];
 
         switch (operator) {
           case 'contains':
@@ -94,10 +77,10 @@ export async function getMany({
   if (sortModel?.length) {
     filteredEmployees.sort((a, b) => {
       for (const { field, sort } of sortModel) {
-        if (a[field as keyof Employee] < b[field as keyof Employee]) {
+        if (a[field] < b[field]) {
           return sort === 'asc' ? -1 : 1;
         }
-        if (a[field as keyof Employee] > b[field as keyof Employee]) {
+        if (a[field] > b[field]) {
           return sort === 'asc' ? 1 : -1;
         }
       }
@@ -116,7 +99,7 @@ export async function getMany({
   };
 }
 
-export async function getOne(employeeId: number) {
+export async function getOne(employeeId) {
   const employeesStore = getEmployeesStore();
 
   const employeeToShow = employeesStore.find((employee) => employee.id === employeeId);
@@ -127,7 +110,7 @@ export async function getOne(employeeId: number) {
   return employeeToShow;
 }
 
-export async function createOne(data: Omit<Employee, 'id'>) {
+export async function createOne(data) {
   const employeesStore = getEmployeesStore();
 
   const newEmployee = {
@@ -140,10 +123,10 @@ export async function createOne(data: Omit<Employee, 'id'>) {
   return newEmployee;
 }
 
-export async function updateOne(employeeId: number, data: Partial<Omit<Employee, 'id'>>) {
+export async function updateOne(employeeId, data) {
   const employeesStore = getEmployeesStore();
 
-  let updatedEmployee: Employee | null = null;
+  let updatedEmployee = null;
 
   setEmployeesStore(
     employeesStore.map((employee) => {
@@ -161,7 +144,7 @@ export async function updateOne(employeeId: number, data: Partial<Omit<Employee,
   return updatedEmployee;
 }
 
-export async function deleteOne(employeeId: number) {
+export async function deleteOne(employeeId) {
   const employeesStore = getEmployeesStore();
 
   setEmployeesStore(employeesStore.filter((employee) => employee.id !== employeeId));
@@ -169,10 +152,8 @@ export async function deleteOne(employeeId: number) {
 
 // Validation follows the [Standard Schema](https://standardschema.dev/).
 
-type ValidationResult = { issues: { message: string; path: (keyof Employee)[] }[] };
-
-export function validate(employee: Partial<Employee>): ValidationResult {
-  let issues: ValidationResult['issues'] = [];
+export function validate(employee) {
+  let issues = [];
 
   if (!employee.name) {
     issues = [...issues, { message: 'Name is required', path: ['name'] }];
