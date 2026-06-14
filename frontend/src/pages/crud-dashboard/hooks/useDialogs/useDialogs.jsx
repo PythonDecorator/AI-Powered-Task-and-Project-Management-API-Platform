@@ -14,7 +14,7 @@ import DialogsContext from './DialogsContext';
  * The props that are passed to a dialog component.
  */
 
-function useDialogLoadingButton(onClose: () => Promise) {
+function useDialogLoadingButton(onClose) {
   const [loading, setLoading] = React.useState(false);
   const handleClick = async () => {
     try {
@@ -84,7 +84,7 @@ export function PromptDialog({ open, payload, onClose }) {
       slotProps={{
         paper: {
           component: 'form',
-          onSubmit: async (event: React.SubmitEvent) => {
+          onSubmit: async (event) => {
             event.preventDefault();
             try {
               setLoading(true);

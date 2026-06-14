@@ -52,7 +52,7 @@ export default function EmployeeForm(props) {
   );
 
   const handleTextFieldChange = React.useCallback(
-    (event: React.ChangeEvent) => {
+    (event) => {
       onFieldChange(
         event.target.name EmployeeFormState['values'],
         event.target.value,
@@ -62,7 +62,7 @@ export default function EmployeeForm(props) {
   );
 
   const handleNumberFieldChange = React.useCallback(
-    (event: React.ChangeEvent) => {
+    (event) => {
       onFieldChange(
         event.target.name EmployeeFormState['values'],
         Number(event.target.value),
@@ -72,14 +72,14 @@ export default function EmployeeForm(props) {
   );
 
   const handleCheckboxFieldChange = React.useCallback(
-    (event: React.ChangeEvent, checked) => {
+    (event, checked) => {
       onFieldChange(event.target.name EmployeeFormState['values'], checked);
     },
     [onFieldChange],
   );
 
   const handleDateFieldChange = React.useCallback(
-    (fieldName: keyof EmployeeFormState['values']) => (value: Dayjs | null) => {
+    (fieldName) => (value) => {
       if (value?.isValid()) {
         onFieldChange(fieldName, value.toISOString() ?? null);
       } else if (formValues[fieldName]) {
@@ -90,7 +90,7 @@ export default function EmployeeForm(props) {
   );
 
   const handleSelectFieldChange = React.useCallback(
-    (event: SelectChangeEvent) => {
+    (event) => {
       onFieldChange(
         event.target.name EmployeeFormState['values'],
         event.target.value,
@@ -163,7 +163,7 @@ export default function EmployeeForm(props) {
               <InputLabel id="employee-role-label">Department</InputLabel>
               <Select
                 value={formValues.role ?? ''}
-                onChange={handleSelectFieldChange as SelectProps['onChange']}
+                onChange={handleSelectFieldChange}
                 labelId="employee-role-label"
                 name="role"
                 label="Department"

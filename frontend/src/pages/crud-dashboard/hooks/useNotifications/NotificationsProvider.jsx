@@ -12,7 +12,7 @@ import useSlotProps from '@mui/utils/useSlotProps';
 import NotificationsContext from './NotificationsContext';
 
 
-const RootPropsContext = React.createContext<NotificationsProviderProps | null>(
+const RootPropsContext = React.createContext(
   null,
 );
 
@@ -32,7 +32,7 @@ function Notification({
   const { severity, actionText, onAction, autoHideDuration } = options;
 
   const handleClose = React.useCallback(
-    (event: unknown, reason?: CloseReason | SnackbarCloseReason) => {
+    (event, reason) => {
       if (reason === 'clickaway') {
         return;
       }
@@ -110,7 +110,7 @@ const generateId = () => {
  * Provider for Notifications. The subtree of this component can use the `useNotifications` hook to
  * access the notifications API. The notifications are shown in the same order they are requested.
  */
-export default function NotificationsProvider(props: NotificationsProviderProps) {
+export default function NotificationsProvider(props) {
   const { children } = props;
   const [state, setState] = React.useState({ queue: [] });
 

@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router';
 import useNotifications from '../hooks/useNotifications/useNotifications';
-import { 
+import {
   createOne,
-  validate,
-  Employee} from '../data/employees';
-import EmployeeForm, {
+  validate} from '../data/employees';
+import EmployeeForm, {
 } from './EmployeeForm';
 import PageContainer from './PageContainer';
 
@@ -43,7 +42,7 @@ export default function EmployeeCreate() {
   );
 
   const handleFormFieldChange = React.useCallback(
-    (name: keyof EmployeeFormState['values'], value: FormFieldValue) => {
+    (name, value) => {
       const validateField = async (values) => {
         const { issues } = validateEmployee(values);
         setFormErrors({
@@ -74,7 +73,7 @@ export default function EmployeeCreate() {
     setFormErrors({});
 
     try {
-      await createEmployee(formValues as Omit<Employee, 'id'>);
+      await createEmployee(formValues);
       notifications.show('Employee created successfully.', {
         severity: 'success',
         autoHideDuration: 3000});

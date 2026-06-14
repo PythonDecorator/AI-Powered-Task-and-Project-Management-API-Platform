@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {  useTheme, Theme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -28,7 +28,7 @@ export default function DashboardSidebar({
 
   const { pathname } = useLocation();
 
-  const [expandedItemIds, setExpandedItemIds] = React.useState<string[]>([]);
+  const [expandedItemIds, setExpandedItemIds] = React.useState([]);
 
   const isOverSmViewport = useMediaQuery(theme.breakpoints.up('sm'));
   const isOverMdViewport = useMediaQuery(theme.breakpoints.up('md'));
@@ -114,7 +114,7 @@ export default function DashboardSidebar({
     isOverSmViewport && (!disableCollapsibleSidebar || isOverMdViewport);
 
   const getDrawerContent = React.useCallback(
-    (viewport: 'phone' | 'tablet' | 'desktop') => (
+    (viewport) => (
       <React.Fragment>
         <Toolbar />
         <Box
@@ -201,7 +201,7 @@ export default function DashboardSidebar({
   );
 
   const getDrawerSharedSx = React.useCallback(
-    (isTemporary) => (drawerTheme: Theme) => {
+    (isTemporary) => (drawerTheme) => {
       const drawerWidth = mini ? MINI_DRAWER_WIDTH : DRAWER_WIDTH;
       const widthTransitionStyles = getDrawerSxTransitionMixin(
         expanded,

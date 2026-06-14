@@ -8,22 +8,22 @@ import DialogsContext from './DialogsContext';
  * Provider for Dialog stacks. The subtree of this component can use the `useDialogs` hook to
  * access the dialogs API. The dialogs are rendered in the order they are requested.
  */
-export default function DialogsProvider(props: DialogProviderProps) {
+export default function DialogsProvider(props) {
   const { children, unmountAfter = 1000 } = props;
-  const [stack, setStack] = React.useState<DialogStackEntry<any, any>[]>([]);
+  const [stack, setStack] = React.useState([]);
   const keyPrefix = React.useId();
   const nextId = React.useRef(0);
   const dialogMetadata = React.useRef(
-    new WeakMap<Promise, DialogStackEntry<any, any>>(),
+    new WeakMap(),
   );
 
-  const requestDialog = useEventCallback(function open<P, R>(
-    Component: DialogComponent<P, R>,
-    payload: P,
-    options: OpenDialogOptions = {},
+  const requestDialog = useEventCallback(function open(
+    Component,
+    payload,
+    options = {},
   ) {
     const { onClose = async () => {} } = options;
-    let resolve: ((result: R) => void) | undefined;
+    let resolve;
     const promise = new Promise((resolveImpl) => {
       resolve = resolveImpl;
     });
@@ -35,7 +35,7 @@ export default function DialogsProvider(props: DialogProviderProps) {
     const key = `${keyPrefix}-${nextId.current}`;
     nextId.current += 1;
 
-    const newEntry: DialogStackEntry<P, R> = {
+    const newEntry = {
       key,
       open: true,
       promise,
@@ -52,7 +52,7 @@ export default function DialogsProvider(props: DialogProviderProps) {
   });
 
   const closeDialogUi = useEventCallback(function closeDialogUi(
-    dialog: Promise,
+    dialog,
   ) {
     setStack((prevStack) =>
       prevStack.map((entry) =>
@@ -67,8 +67,8 @@ export default function DialogsProvider(props: DialogProviderProps) {
   });
 
   const closeDialog = useEventCallback(async function closeDialog(
-    dialog: Promise,
-    result: R,
+    dialog,
+    result,
   ) {
     const entryToClose = dialogMetadata.current.get(dialog);
     if (!entryToClose) {

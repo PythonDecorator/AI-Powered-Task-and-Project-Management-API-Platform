@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {  Theme, SxProps } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
@@ -46,7 +45,7 @@ export default function DashboardSidebarPageItem({
     }
   }, [onPageItemClick, id, nestedNavigation]);
 
-  let nestedNavigationCollapseSx: SxProps = { display: 'none' };
+  let nestedNavigationCollapseSx = { display: 'none' };
   if (mini && fullyCollapsed) {
     nestedNavigationCollapseSx = {
       fontSize: 18,
@@ -55,7 +54,7 @@ export default function DashboardSidebarPageItem({
       right: '2px',
       transform: 'translateY(-50%) rotate(-90deg)'};
   } else if (!mini && fullyExpanded) {
-    nestedNavigationCollapseSx = (theme: Theme) => ({
+    nestedNavigationCollapseSx = (theme) => ({
       ml: 0.5,
       fontSize: 20,
       transform: `rotate(${expanded ? 0 : -90}deg)`,

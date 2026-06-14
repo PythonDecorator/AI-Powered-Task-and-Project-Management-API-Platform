@@ -8,11 +8,6 @@ import Tooltip from '@mui/material/Tooltip';
 import {
   DataGrid,
   GridActionsCellItem,
-  GridColDef,
-  GridFilterModel,
-  GridPaginationModel,
-  GridSortModel,
-  GridEventListener,
   gridClasses} from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -21,10 +16,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import useNotifications from '../hooks/useNotifications/useNotifications';
-import { 
+import {
   deleteOne,
-  getMany,
-  Employee} from '../data/employees';
+  getMany} from '../data/employees';
 import PageContainer from './PageContainer';
 
 const INITIAL_PAGE_SIZE = 10;
@@ -51,18 +45,15 @@ export default function EmployeeList() {
     searchParams.get('sort') ? JSON.parse(searchParams.get('sort') ?? '') : [],
   );
 
-  const [rowsState, setRowsState] = React.useState<{
-    rows[];
-    rowCount;
-  }>({
+  const [rowsState, setRowsState] = React.useState({
     rows: [],
     rowCount: 0});
 
   const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
+  const [error, setError] = React.useState(null);
 
   const handlePaginationModelChange = React.useCallback(
-    (model: GridPaginationModel) => {
+    (model) => {
       setPaginationModel(model);
 
       searchParams.set('page', String(model.page));
@@ -78,7 +69,7 @@ export default function EmployeeList() {
   );
 
   const handleFilterModelChange = React.useCallback(
-    (model: GridFilterModel) => {
+    (model) => {
       setFilterModel(model);
 
       if (
@@ -100,7 +91,7 @@ export default function EmployeeList() {
   );
 
   const handleSortModelChange = React.useCallback(
-    (model: GridSortModel) => {
+    (model) => {
       setSortModel(model);
 
       if (model.length > 0) {
@@ -148,7 +139,7 @@ export default function EmployeeList() {
     }
   }, [isLoading, loadData]);
 
-  const handleRowClick = React.useCallback<GridEventListener<'rowClick'>>(
+  const handleRowClick = React.useCallback(
     ({ row }) => {
       navigate(`/employees/${row.id}`);
     },
@@ -206,7 +197,7 @@ export default function EmployeeList() {
     [],
   );
 
-  const columns = React.useMemo<GridColDef[]>(
+  const columns = React.useMemo(
     () => [
       { field: 'id', headerName: 'ID' },
       { field: 'name', headerName: 'Name', width: 140 },

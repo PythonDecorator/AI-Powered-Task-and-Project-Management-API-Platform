@@ -4,21 +4,17 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate, useParams } from 'react-router';
 import useNotifications from '../hooks/useNotifications/useNotifications';
-import { 
+import {
   getOne,
   updateOne,
-  validate,
-  Employee} from '../data/employees';
-import EmployeeForm, {
+  validate} from '../data/employees';
+import EmployeeForm, {
 } from './EmployeeForm';
 import PageContainer from './PageContainer';
 
 function EmployeeEditForm({
   initialValues,
-  onSubmit}: {
-  initialValues;
-  onSubmit: (formValues) => Promise;
-}) {
+  onSubmit}) {
   const { employeeId } = useParams();
   const navigate = useNavigate();
 
@@ -49,7 +45,7 @@ function EmployeeEditForm({
   );
 
   const handleFormFieldChange = React.useCallback(
-    (name: keyof EmployeeFormState['values'], value: FormFieldValue) => {
+    (name, value) => {
       const validateField = async (values) => {
         const { issues } = validateEmployee(values);
         setFormErrors({
@@ -112,9 +108,9 @@ function EmployeeEditForm({
 export default function EmployeeEdit() {
   const { employeeId } = useParams();
 
-  const [employee, setEmployee] = React.useState<Employee | null>(null);
+  const [employee, setEmployee] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
+  const [error, setError] = React.useState(null);
 
   const loadData = React.useCallback(async () => {
     setError(null);
