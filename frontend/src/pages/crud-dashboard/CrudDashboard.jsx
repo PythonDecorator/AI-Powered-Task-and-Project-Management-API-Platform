@@ -43,12 +43,12 @@ const themeComponents = {
   ...sidebarCustomizations,
   ...formInputCustomizations};
 
-export default function CrudDashboard(props: { disableCustomTheme?: boolean }) {
+export default function CrudDashboard(props) {
   return (
     <AppTheme {...props} themeComponents={themeComponents}>
       <CssBaseline enableColorScheme />
-      
-        
+      <NotificationsProvider>
+        <DialogsProvider>
           <RouterProvider router={router} />
         </DialogsProvider>
       </NotificationsProvider>
