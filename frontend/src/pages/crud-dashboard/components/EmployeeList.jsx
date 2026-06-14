@@ -247,11 +247,9 @@ export default function EmployeeList() {
       actions={
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <Tooltip title="Reload data" placement="right" enterDelay={1000}>
-            
-              <IconButton size="small" aria-label="refresh" onClick={handleRefresh}>
-                <RefreshIcon />
-              </IconButton>
-            </div>
+            <IconButton size="small" aria-label="refresh" onClick={handleRefresh}>
+              <RefreshIcon />
+            </IconButton>
           </Tooltip>
           <Button
             variant="contained"
