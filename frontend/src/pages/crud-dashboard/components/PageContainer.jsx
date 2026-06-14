@@ -72,10 +72,9 @@ export default function PageContainer(props) {
           </PageHeaderToolbar>
         </PageContentHeader>
       </Stack>
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {children}
-        </Box>
-      </Stack>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </Box>
     </Container>
   );
 }
