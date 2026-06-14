@@ -54,7 +54,7 @@ export default function EmployeeForm(props) {
   const handleTextFieldChange = React.useCallback(
     (event) => {
       onFieldChange(
-        event.target.name EmployeeFormState['values'],
+        event.target.name,
         event.target.value,
       );
     },
@@ -64,7 +64,7 @@ export default function EmployeeForm(props) {
   const handleNumberFieldChange = React.useCallback(
     (event) => {
       onFieldChange(
-        event.target.name EmployeeFormState['values'],
+        event.target.name,
         Number(event.target.value),
       );
     },
@@ -73,7 +73,7 @@ export default function EmployeeForm(props) {
 
   const handleCheckboxFieldChange = React.useCallback(
     (event, checked) => {
-      onFieldChange(event.target.name EmployeeFormState['values'], checked);
+      onFieldChange(event.target.name, checked);
     },
     [onFieldChange],
   );
@@ -92,7 +92,7 @@ export default function EmployeeForm(props) {
   const handleSelectFieldChange = React.useCallback(
     (event) => {
       onFieldChange(
-        event.target.name EmployeeFormState['values'],
+        event.target.name,
         event.target.value,
       );
     },
@@ -118,7 +118,7 @@ export default function EmployeeForm(props) {
       onReset={handleReset}
       sx={{ width: '100%' }}
     >
-      
+      <FormGroup>
         <Grid container spacing={2} sx={{ mb: 2, width: '100%' }}>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
             <TextField
@@ -178,7 +178,7 @@ export default function EmployeeForm(props) {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-            
+            <FormControl error={!!formErrors.isFullTime} fullWidth>
               <FormControlLabel
                 name="isFullTime"
                 control={
@@ -190,7 +190,7 @@ export default function EmployeeForm(props) {
                 }
                 label="Full-time"
               />
-              <FormHelperText error={!!formErrors.isFullTime}>
+              <FormHelperText>
                 {formErrors.isFullTime ?? ' '}
               </FormHelperText>
             </FormControl>
