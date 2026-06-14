@@ -17,6 +17,10 @@ const MembersPage = lazy(() => import("./pages/organization/members/index.jsx"))
 const ProjectsPage = lazy(() => import("./pages/organization/projects/index.jsx"));
 const MarketingPage = lazy(() => import("./pages/marketing-page/MarketingPage.jsx"));
 const DashboardNewPage = lazy(() => import("./pages/dashboardNew/Dashboard.jsx"));
+const SignInSidePage = lazy(() => import("./pages/sign-in-side/SignInSide.jsx"));
+const CheckoutPage = lazy(() => import("./pages/checkout/Checkout.jsx"));
+const CrudDashboardPage = lazy(() => import("./pages/crud-dashboard/CrudDashboard.jsx"));
+const BlogPage = lazy(() => import("./pages/blog/Blog.jsx"));
 
 
 
@@ -28,6 +32,22 @@ const router = createBrowserRouter([
     {
         path: "/dashboard-new",
         element: <DashboardNewPage/>,
+    },
+    {
+        path: "/sign-in-side",
+        element: <SignInSidePage/>,
+    },
+    {
+        path: "/checkout",
+        element: <CheckoutPage/>,
+    },
+    {
+        path: "/crud-dashboard",
+        element: <CrudDashboardPage/>,
+    },
+    {
+        path: "/blog",
+        element: <BlogPage/>,
     },
 
     {
