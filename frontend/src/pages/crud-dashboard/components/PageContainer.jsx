@@ -3,7 +3,7 @@ import * as React from 'react';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Breadcrumbs, { breadcrumbsClasses } from '@mui/material/Breadcrumbs';
-import Container, { ContainerProps } from '@mui/material/Container';
+import Container from '@mui/material/Container';
 import MuiLink from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -32,7 +32,7 @@ const PageHeaderToolbar = styled('div')(({ theme }) => ({
   marginLeft: 'auto'}));
 
 
-export default function PageContainer(props: PageContainerProps) {
+export default function PageContainer(props) {
   const { children, breadcrumbs, title, actions = null } = props;
 
   return (

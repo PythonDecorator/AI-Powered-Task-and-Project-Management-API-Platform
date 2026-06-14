@@ -9,7 +9,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Select, { SelectChangeEvent, SelectProps } from '@mui/material/Select';
+import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -17,11 +17,11 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
 
 
-export default function EmployeeForm(props: EmployeeFormProps) {
+export default function EmployeeForm(props) {
   const {
     formState,
     onFieldChange,
@@ -38,7 +38,7 @@ export default function EmployeeForm(props: EmployeeFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmit = React.useCallback(
-    async (event: React.FormEvent) => {
+    async (event) => {
       event.preventDefault();
 
       setIsSubmitting(true);
