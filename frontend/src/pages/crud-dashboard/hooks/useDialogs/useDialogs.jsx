@@ -35,9 +35,9 @@ export function AlertDialog({ open, payload, onClose }) {
 
   return (
     <Dialog maxWidth="xs" fullWidth open={open} onClose={() => onClose()}>
-      {payload.title ?? 'Alert'}</DialogTitle>
-      {payload.msg}</DialogContent>
-      
+      <DialogTitle>{payload.title ?? 'Alert'}</DialogTitle>
+      <DialogContent>{payload.msg}</DialogContent>
+      <DialogActions>
         <Button disabled={!open} {...okButtonProps}>
           {payload.okText ?? 'Ok'}
         </Button>
@@ -53,9 +53,9 @@ export function ConfirmDialog({ open, payload, onClose }) {
 
   return (
     <Dialog maxWidth="xs" fullWidth open={open} onClose={() => onClose(false)}>
-      {payload.title ?? 'Confirm'}</DialogTitle>
-      {payload.msg}</DialogContent>
-      
+      <DialogTitle>{payload.title ?? 'Confirm'}</DialogTitle>
+      <DialogContent>{payload.msg}</DialogContent>
+      <DialogActions>
         <Button autoFocus disabled={!open} {...cancelButtonProps}>
           {payload.cancelText ?? 'Cancel'}
         </Button>
@@ -101,9 +101,9 @@ export function PromptDialog({ open, payload, onClose }) {
             }
           }}}}
     >
-      {payload.title ?? 'Confirm'}</DialogTitle>
-      
-        {payload.msg} </DialogContentText>
+      <DialogTitle>{payload.title ?? 'Confirm'}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>{payload.msg}</DialogContentText>
         <TextField
           autoFocus
           required
@@ -117,7 +117,7 @@ export function PromptDialog({ open, payload, onClose }) {
           onChange={(event) => setInput(event.target.value)}
         />
       </DialogContent>
-      
+      <DialogActions>
         <Button disabled={!open} {...cancelButtonProps}>
           {payload.cancelText ?? 'Cancel'}
         </Button>
