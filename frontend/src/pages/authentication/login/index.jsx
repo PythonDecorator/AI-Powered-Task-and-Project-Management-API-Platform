@@ -1,30 +1,42 @@
 import { Box, Container } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import LoginForm from './LoginForm';
 import { createGradient } from '../../../assets/theme/utilities';
-import { useLogin } from '../../../utils/hooks/useAuth';
+import { unAuthorizedRequest } from '../../../utils/helpers/http';
+import { loginUrl } from '../../../utils/helpers/apiUrls';
+import { setTokens } from '../../../utils/helpers/auth';
+import { useSnackbar } from '../../../components/CustomSnackBar';
 
 const Login = () => {
   const navigate = useNavigate();
-  const loginMutation = useLogin();
+  const { showSnackbar } = useSnackbar();
+
+  const loginMutation = useMutation({
+    mutationFn: (credentials) =>
+      unAuthorizedRequest({
+        url: loginUrl,
+        method: 'POST',
+        payload: credentials,
+      }),
+    onSuccess: (data) => {
+      if (data?.access && data?.refresh) {
+        setTokens(data.access, data.refresh);
+        showSnackbar('Login successful!', 'success');
+        navigate('/dashboard');
+      }
+    },
+    onError: (error) => {
+      showSnackbar(error.message || 'Login failed', 'error');
+    },
+  });
 
   const handleLogin = async (data) => {
-    loginMutation.mutate(
-      { email: data.email, password: data.password },
-      {
-        onSuccess: () => {
-          navigate('/dashboard');
-        },
-      }
-    );
+    loginMutation.mutate({
+      email: data.email,
+      password: data.password,
+    });
   };
-
-  useEffect(() => {
-    if (loginMutation.isSuccess) {
-      navigate('/dashboard');
-    }
-  }, [loginMutation.isSuccess, navigate]);
 
   return (
     <Box

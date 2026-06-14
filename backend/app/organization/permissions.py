@@ -26,6 +26,7 @@ class OrgAction:
     HIRE_MEMBERS = "hire_members"
     MANAGE_MEMBERS = "manage_members"
     GIVE_MEMBER_PERMISSIONS = "give_members_permissions"
+    DELETE_MEMBERS = "delete_members"
     MANAGE_DEPARTMENT = "manage_department"
     MANAGE_CHAT_ROOMS = "manage_chat_rooms"
     MANAGE_ORG = "manage_org"
@@ -50,6 +51,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
         OrgAction.HIRE_MEMBERS,
         OrgAction.MANAGE_MEMBERS,
         OrgAction.GIVE_MEMBER_PERMISSIONS,
+        OrgAction.DELETE_MEMBERS,
         OrgAction.MANAGE_DEPARTMENT,
         OrgAction.MANAGE_CHAT_ROOMS,
         OrgAction.MANAGE_ORG,

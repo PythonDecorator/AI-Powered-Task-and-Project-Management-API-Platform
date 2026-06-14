@@ -1,20 +1,21 @@
 import { useContext, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Box, Typography, Button } from '@mui/material';
 import DashboardLayout from '../../../layouts/LayoutContainers/DashboardLayout/index.jsx';
 import DepartmentAddModal from './DepartmentAddModal.jsx';
 import DepartmentEditModal from './DepartmentEditModal.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
-import { useDeleteDepartment } from '../../../utils/hooks/useDepartments.js';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
-import { departmentsUrl } from '../../../utils/helpers/apiUrls.js';
+import { departmentsUrl, deleteDepartmentUrl } from '../../../utils/helpers/apiUrls.js';
 import Loading from '../../../components/Loading/index.jsx';
 import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
 import DeleteConfirmDialog from '../../../components/DeleteConfirmDialog/index.jsx';
 import DepartmentTable from './DepartmentTable.jsx';
+import { useSnackbar } from '../../../components/CustomSnackBar';
 
 const DepartmentsPage = () => {
   const { onOpenModal } = useContext(ModalContext);
+  const { showSnackbar } = useSnackbar();
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
@@ -24,23 +25,46 @@ const DepartmentsPage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const departments = departmentsResponse?.data?.results || [];
-  const deleteMutation = useDeleteDepartment();
+  const departments = departmentsResponse?.results || [];
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) =>
+      authorizedRequest({
+        url: deleteDepartmentUrl(id),
+        method: 'DELETE',
+      }),
+  });
+
+  const getDeleteWarnings = (department) => {
+    const warnings = [];
+    if (department.members && department.members.length > 0) {
+      warnings.push(`Has ${department.members.length} team member(s)`);
+    }
+    return warnings;
+  };
+
+  const handleDeleteClick = (department) => {
+    setDeleteConfirm({
+      ...department,
+      warnings: getDeleteWarnings(department),
+    });
+  };
 
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(deleteConfirm.id);
+      showSnackbar('Department deleted successfully', 'success');
       setDeleteConfirm(null);
       refetch();
     } catch (err) {
-      console.error('Failed to delete department:', err);
+      showSnackbar('Failed to delete department', 'error');
     }
   };
 
   const handleEditClick = (dept) => {
     setSelectedDepartment(dept);
     onOpenModal('Edit Department');
-  };
+  }
 
   const handleAddClick = () => {
     setSelectedDepartment(null);
@@ -58,7 +82,7 @@ const DepartmentsPage = () => {
       <DepartmentTable
         data={departments}
         onEdit={handleEditClick}
-        onDelete={setDeleteConfirm}
+        onDelete={handleDeleteClick}
       />
     );
   } else {
@@ -85,15 +109,18 @@ const DepartmentsPage = () => {
 
   return (
     <DashboardLayout>
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Departments
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Manage your organization's departments
-            </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+            <Box sx={{ width: 4, height: 28, borderRadius: 1, backgroundColor: 'primary.main' }} />
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                Departments
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Manage your organization's departments
+              </Typography>
+            </Box>
           </Box>
           {departments.length > 0 && (
             <Button variant="contained" onClick={handleAddClick}>
@@ -114,9 +141,12 @@ const DepartmentsPage = () => {
         open={!!deleteConfirm}
         title="Delete Department"
         itemName={deleteConfirm?.name || ''}
+        warnings={deleteConfirm?.warnings || []}
         onConfirm={handleDelete}
         onCancel={() => setDeleteConfirm(null)}
         isLoading={deleteMutation.isPending}
+        requireTypeConfirm={true}
+        showReason={false}
       />
     </DashboardLayout>
   );

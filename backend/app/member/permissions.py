@@ -70,3 +70,8 @@ class CanFireMember(_RBACPermission):
 class CanGiveMembersPermissions(_RBACPermission):
     required_action = OrgAction.GIVE_MEMBER_PERMISSIONS
     message = "You do not have permission to change member roles."
+
+
+class CanDeleteMembers(_RBACPermission):
+    required_action = OrgAction.DELETE_MEMBERS
+    message = "You do not have permission to permanently delete members. Only owners can delete members."

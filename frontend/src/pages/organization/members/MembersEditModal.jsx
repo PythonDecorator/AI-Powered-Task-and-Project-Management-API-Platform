@@ -1,13 +1,25 @@
 import { useContext } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import CustomModal from '../../../components/CustomModal/index.jsx';
 import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
-import { useUpdateMember } from '../../../utils/hooks/useMembers.js';
+import { authorizedRequest } from '../../../utils/helpers/http.js';
+import { updateMemberUrl } from '../../../utils/helpers/apiUrls.js';
+import { useSnackbar } from '../../../components/CustomSnackBar';
 
 const MembersEditModal = ({ member, onSuccess }) => {
   const { onCloseModal } = useContext(ModalContext);
-  const updateMutation = useUpdateMember();
+  const { showSnackbar } = useSnackbar();
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) =>
+      authorizedRequest({
+        url: updateMemberUrl(id),
+        method: 'PATCH',
+        payload: data,
+      }),
+  });
 
   const schema = {
     name: {
@@ -111,15 +123,16 @@ const MembersEditModal = ({ member, onSuccess }) => {
         salary: parseFloat(formData.salary),
       };
       await updateMutation.mutateAsync({ id: member.id, data: payload });
+      showSnackbar('Member updated successfully', 'success');
       onSuccess?.();
       onCloseModal();
     } catch (err) {
-      console.error('Failed to update member:', err);
+      showSnackbar('Failed to update member', 'error');
     }
   };
 
   return (
-    <CustomModal title="Edit Member" maxWidth="sm">
+    <CustomModal title="Edit Member" action="Edit Member" maxWidth="sm">
       <GeneralForm
         schema={schema}
         onSubmit={handleSubmit}

@@ -19,9 +19,10 @@ const FormInputField = ({
     field.handleChange(value);
     onChangeListener?.();
   };
-  const { meta } = field.state;
+  const { meta, value } = field.state;
   const showError = meta.isTouched && meta.errors && meta.errors.length > 0;
   const isTouched = meta.isTouched;
+  const hasValue = value !== null && value !== '' && value !== undefined && (!Array.isArray(value) || value.length > 0);
 
   return (
     <CustomBox mb={3}>
@@ -42,7 +43,7 @@ const FormInputField = ({
               *
             </CustomTypography>
           )}
-          {isTouched && !showError && (
+          {isTouched && !showError && hasValue && (
             <Box sx={{ color: 'success.main', fontSize: '1rem' }}>✓</Box>
           )}
         </Box>
@@ -51,7 +52,8 @@ const FormInputField = ({
       {type === 'select' ? (
         <CustomInputAutocomplete
           options={options}
-          field={{ ...field, handleChange: (value) => handleChange(value) }}
+          field={field}
+          onFieldChange={(value) => handleChange(value)}
           placeholder={placeholder}
           multiple={rest.multiple}
           {...rest}

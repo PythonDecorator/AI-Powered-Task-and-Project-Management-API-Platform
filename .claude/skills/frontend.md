@@ -1,14 +1,21 @@
 # Frontend Rules
 
+## Development Process
+- **Always inspect existing codebase before making changes** — read actual patterns and structure, don't assume
+- **Follow existing patterns and reuse components** — avoid duplicating functionality when solutions already exist
+- **When fixing bugs:** Explain root cause first, then write code — ensures fix targets the actual problem
+- **Always include tests for new features or fixes** where applicable
+
 ## Structure
 - `main.jsx` mount only · `App.jsx` providers only · `src/store/` UI state via Context · server state in TanStack Query only
-- Components: `src/components/` (Custom* primitives) · `src/examples/` (composites) · `src/pages/{feature}/` (pages + sub-components) · Max file length: 400 lines — split into subcomponents or hooks if exceeded
+- Components: `src/components/` (Custom* primitives) · `src/examples/` (composites) · `src/pages/{feature}/` (pages + sub-components) · Max file length: 400 lines — split into subcomponents
 - Routing: wrap every page in a layout from `src/layouts/` · always update `src/router.jsx`
 
-## Component & Hook Strategy
-- **Hooks**: Co-locate page-specific hooks in page folders · keep shared hooks in `utils/hooks/`
-  - Example: `dashboard/useCurrentUser.js` for dashboard-only hook
-  - Shared: `useDepartments()`, `useMembers()`, `useLogin()` in `utils/hooks/`
+## Component & Data Fetching Strategy (HitchPay Pattern)
+- **No custom hooks** · Use React Query directly in components
+  - Direct `useQuery()` calls with `authorizedRequest()` in component bodies
+  - Form submissions use direct `authorizedRequest()` in `onSubmit` handlers
+  - Better control over loading/error states
 - **Components**: Use direct MUI components by default, reserve Custom* for specific needs
   - **Standard MUI** (`Box`, `Typography`, `Button`, `Grid`, `Card`, etc.) - primary choice for all layouts
   - `CustomModal` - for ALL modals
@@ -22,26 +29,31 @@
 
 ## HTTP & Authentication
 - **All API calls via `http.js`**: Use `authorizedRequest()` or `unAuthorizedRequest()` based on endpoint
-- **authorizedRequest()**: For endpoints requiring Bearer token (list, create, update, delete, logout, get-me)
+- **Direct useQuery for data fetching** (no custom hooks):
   ```jsx
-  const { data } = useQuery({
-    queryKey: [url],
-    queryFn: ({ signal }) => authorizedRequest({ url, signal }),
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: [apiUrl],
+    queryFn: ({ signal }) => authorizedRequest({ url: apiUrl, signal }),
+    staleTime: 600000, // 10 minutes
   });
+  
+  if (isPending) return <Loading />;
+  if (isError) return <ErrorMessage message={error?.message} />;
+  return <Table data={data.data} />;
   ```
-- **unAuthorizedRequest()**: For public endpoints (login, register, refresh-token, forgot-password)
+- **Form submissions** - direct `authorizedRequest()` in `onSubmit` handlers:
   ```jsx
-  const loginMutation = useMutation({
-    mutationFn: (credentials) => unAuthorizedRequest({ 
-      url: loginUrl, 
-      method: 'POST', 
-      payload: credentials 
-    }),
-  });
+  const handleSubmit = async (formData) => {
+    const result = await authorizedRequest({
+      url: apiUrl,
+      method: 'POST',
+      payload: formData,
+    });
+    onCloseModal(); // Modal closes on success
+  };
   ```
 - **URLs centralized in `apiUrls.js`**: Import URLs, never hardcode `/api/v1/...`
 - **Auth helpers in `auth.js`**: setTokens(), clearAuth(), getAuthToken(), protectedAuthLoader()
-- **Hooks pattern**: useMembers(), useDepartments(), useLogin(), useLogout() — use appropriate request function
 - **Decision rule**:
   - ✅ authorizedRequest: GET, PATCH, DELETE, POST (private) — anything needing token
   - ✅ unAuthorizedRequest: POST (login), POST (register), POST (refresh-token) — public endpoints
@@ -74,7 +86,7 @@
 ## Data & API
 - **API client**: `http.js` with axios + interceptors for token management
 - **URL management**: All endpoints in `apiUrls.js` — import and use
-- **TanStack Query**: All server state via useQuery/useMutation — never useEffect for fetching
-- **Custom hooks**: Wrap mutations/queries in hooks (useMembers, useDepartments, useCreateMember, etc.)
+- **TanStack Query**: All server state via useQuery — never useEffect for fetching, direct calls in components
+- **No custom hooks**: Use `authorizedRequest()` and `unAuthorizedRequest()` directly
 - **Signal handling**: Always pass `{ signal }` to queryFn for proper cancellation
-- **Refetching**: Page passes `refetch` callback to modals via `onSuccess` prop
+- **Loading/Error feedback**: Use `<Loading />` and `<ErrorMessage />` components from `src/examples/`

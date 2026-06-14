@@ -1,13 +1,25 @@
 import { useContext } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import CustomModal from '../../../components/CustomModal/index.jsx';
 import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
-import { useCreateMember } from '../../../utils/hooks/useMembers.js';
+import { authorizedRequest } from '../../../utils/helpers/http.js';
+import { createMemberUrl } from '../../../utils/helpers/apiUrls.js';
+import { useSnackbar } from '../../../components/CustomSnackBar';
 
 const MembersAddModal = ({ onSuccess }) => {
   const { onCloseModal } = useContext(ModalContext);
-  const createMutation = useCreateMember();
+  const { showSnackbar } = useSnackbar();
+
+  const createMutation = useMutation({
+    mutationFn: (data) =>
+      authorizedRequest({
+        url: createMemberUrl,
+        method: 'POST',
+        payload: data,
+      }),
+  });
 
   const schema = {
     name: {
@@ -103,15 +115,16 @@ const MembersAddModal = ({ onSuccess }) => {
         salary: parseFloat(formData.salary),
       };
       await createMutation.mutateAsync(payload);
+      showSnackbar('Member added successfully', 'success');
       onSuccess?.();
       onCloseModal();
     } catch (err) {
-      console.error('Failed to create member:', err);
+      showSnackbar('Failed to add member', 'error');
     }
   };
 
   return (
-    <CustomModal title="Add New Member" maxWidth="sm">
+    <CustomModal title="Add Member" action="Add Member" maxWidth="sm">
       <GeneralForm
         schema={schema}
         onSubmit={handleSubmit}

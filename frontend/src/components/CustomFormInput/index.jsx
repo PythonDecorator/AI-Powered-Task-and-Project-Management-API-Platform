@@ -1,4 +1,8 @@
 import { TextField, Box, Typography, InputAdornment } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import { forwardRef } from 'react';
 
 const CustomFormInput = forwardRef(({
@@ -24,6 +28,8 @@ const CustomFormInput = forwardRef(({
   const hasError = error || (validation && validation.hasError);
   const displayError = helperText || (validation && validation.error);
 
+  const isDateInput = type === 'date';
+
   return (
     <Box sx={{ width: fullWidth ? '100%' : 'auto' }}>
       {label && !hideLabel && (
@@ -41,7 +47,59 @@ const CustomFormInput = forwardRef(({
           {required && <span style={{ color: '#f44336', marginLeft: '4px' }}>*</span>}
         </Typography>
       )}
-      <TextField
+      {isDateInput ? (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            ref={ref}
+            value={props.value ? dayjs(props.value) : null}
+            onChange={(date) => {
+              props.onChange?.({
+                target: {
+                  value: date ? date.format('YYYY-MM-DD') : '',
+                },
+              });
+            }}
+            onBlur={props.onBlur}
+            disabled={disabled}
+            slotProps={{
+              textField: {
+                fullWidth,
+                error: hasError,
+                helperText: displayError,
+                size,
+                variant,
+              },
+            }}
+            sx={{
+              width: fullWidth ? '100%' : 'auto',
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'rgba(102, 126, 234, 0.05)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                borderRadius: '8px',
+                '&:hover': {
+                  backgroundColor: 'rgba(102, 126, 234, 0.08)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: hasError ? '#f44336' : 'rgba(102, 126, 234, 0.3)',
+                  },
+                },
+                '&.Mui-focused': {
+                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                  boxShadow: `0 0 0 3px rgba(102, 126, 234, 0.15)`,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: hasError ? '#f44336' : 'rgba(102, 126, 234, 0.5)',
+                    borderWidth: 2,
+                  },
+                },
+              },
+              '& .MuiOutlinedInput-input': {
+                color: 'text.primary',
+                fontSize: '0.95rem',
+              },
+            }}
+          />
+        </LocalizationProvider>
+      ) : (
+        <TextField
         ref={ref}
         fullWidth={fullWidth}
         type={type}
@@ -102,6 +160,9 @@ const CustomFormInput = forwardRef(({
               color: 'text.secondary',
               opacity: 0.6,
             },
+            '&[type="date"]': {
+              colorScheme: 'light dark',
+            },
           },
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: hasError ? '#f44336' : 'rgba(102, 126, 234, 0.2)',
@@ -118,6 +179,7 @@ const CustomFormInput = forwardRef(({
         }}
         {...props}
       />
+      )}
     </Box>
   );
 });

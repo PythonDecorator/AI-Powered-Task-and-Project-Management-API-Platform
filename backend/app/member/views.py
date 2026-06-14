@@ -32,6 +32,7 @@ from .permissions import (
     CanHireMember,
     CanFireMember,
     CanGiveMembersPermissions,
+    CanDeleteMembers,
 )
 
 CACHE_KEY = "cached_members"
@@ -48,14 +49,8 @@ class MemberFilter(FilterSet):
 
 
 def _bust_member_cache():
-    """
-    Delete all cache keys that match the cached_members prefix.
-    Falls back to cache.clear() if the backend doesn't support patterns.
-    """
-    try:
-        cache.delete_pattern(f"*{CACHE_KEY}*")
-    except AttributeError:
-        cache.clear()
+    """Clear all member-related caches."""
+    cache.clear()
 
 
 class ManageMemberAPIView(
@@ -101,6 +96,7 @@ class ManageMemberAPIView(
         action_map = {
             "hire_member": [permissions.IsAuthenticated(), CanHireMember()],
             "fire_member": [permissions.IsAuthenticated(), CanFireMember()],
+            "delete_member": [permissions.IsAuthenticated(), CanDeleteMembers()],
             "change_member_role": [permissions.IsAuthenticated(), CanGiveMembersPermissions()],
         }
         return action_map.get(self.action, super().get_permissions())
@@ -147,7 +143,8 @@ class ManageMemberAPIView(
         """Create a Member row and email them an invitation link."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        member = serializer.save()
+        # New members start inactive until they confirm email
+        member = serializer.save(is_active=False)
 
         organization = request.user.member.organization
         email = member.email
@@ -203,6 +200,54 @@ class ManageMemberAPIView(
                 "ok": True,
                 "message": "Member has been deactivated.",
                 "results": self.get_serializer(instance).data,
+            }
+        )
+
+    @action(methods=["POST"], detail=True, url_path="reactivate-member")
+    def reactivate_member(self, request, pk=None):  # noqa
+        """Reactivate a deactivated member (set is_active=True, clear termination date)."""
+        instance = self.get_object()
+
+        if instance == request.user.member:
+            return Response(
+                {"ok": False, "error": "You cannot reactivate yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        instance.is_active = True
+        instance.termination_date = None
+        instance.save(update_fields=["is_active", "termination_date"])
+
+        _bust_member_cache()
+        return Response(
+            {
+                "ok": True,
+                "message": "Member has been reactivated.",
+                "results": self.get_serializer(instance).data,
+            }
+        )
+
+    @action(methods=["DELETE"], detail=True, url_path="delete-member")
+    def delete_member(self, request, pk=None):  # noqa
+        """Permanently delete a member (owner only). Data cannot be recovered."""
+        instance = self.get_object()
+
+        if instance == request.user.member:
+            return Response(
+                {"ok": False, "error": "You cannot delete yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        member_name = instance.name
+        member_id = instance.id
+        instance.delete()
+
+        _bust_member_cache()
+        return Response(
+            {
+                "ok": True,
+                "message": f"Member '{member_name}' has been permanently deleted.",
+                "deleted_id": member_id,
             }
         )
 

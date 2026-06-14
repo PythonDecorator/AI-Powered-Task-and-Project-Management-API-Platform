@@ -69,11 +69,28 @@ const SimpleTable = ({
         </CustomBox>
       ) : (
         <>
-          <TableContainer sx={{ overflow: 'hidden' }}>
+          <TableContainer sx={{
+            overflow: 'auto',
+            overflowY: 'hidden',
+            '&::-webkit-scrollbar': {
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'rgba(102, 126, 234, 0.05)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(102, 126, 234, 0.3)',
+              borderRadius: '4px',
+              '&:hover': {
+                backgroundColor: 'rgba(102, 126, 234, 0.5)',
+              },
+            },
+          }}>
             <Table
               sx={{
                 backgroundColor: 'transparent',
                 borderCollapse: 'collapse',
+                minWidth: '600px',
               }}
             >
               <TableHead>

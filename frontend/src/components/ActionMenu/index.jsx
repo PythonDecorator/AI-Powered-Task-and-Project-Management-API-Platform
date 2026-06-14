@@ -19,9 +19,10 @@ const ActionMenu = ({ menuItems = [] }) => {
     handleClose();
   };
 
-  // Separate error items from regular items
-  const regularItems = menuItems.filter(item => item.color !== 'error');
+  // Separate items by color type
+  const regularItems = menuItems.filter(item => !item.color || (item.color !== 'error' && item.color !== 'success'));
   const errorItems = menuItems.filter(item => item.color === 'error');
+  const successItems = menuItems.filter(item => item.color === 'success');
 
   return (
     <>
@@ -79,7 +80,32 @@ const ActionMenu = ({ menuItems = [] }) => {
           </MenuItem>
         ))}
 
-        {regularItems.length > 0 && errorItems.length > 0 && (
+        {successItems.map(({ label, action }, index) => (
+          <MenuItem
+            key={`success-${index}`}
+            onClick={() => handleMenuItemClick(action)}
+            sx={{
+              py: 1,
+              px: 2,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              },
+            }}
+          >
+            <CustomTypography
+              variant="body2"
+              sx={{
+                color: 'success.main',
+                fontWeight: 600,
+              }}
+            >
+              {label}
+            </CustomTypography>
+          </MenuItem>
+        ))}
+
+        {(regularItems.length > 0 || successItems.length > 0) && errorItems.length > 0 && (
           <Divider sx={{ my: 0.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
         )}
 

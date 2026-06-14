@@ -116,6 +116,12 @@ class Command(BaseCommand):
                     staff2 = create_user_and_member('staff2', db.create_member, 'Staff')
                     staff3 = create_user_and_member('staff3', db.create_member, 'Staff')
 
+                    # Create one deactivated member for testing
+                    deactivated_staff = create_user_and_member('staff_deactivated', db.create_member, 'Deactivated', is_active=False)
+                    from django.utils import timezone
+                    deactivated_staff.termination_date = timezone.now().date()
+                    deactivated_staff.save(update_fields=['termination_date'])
+
                     # Departments: Engineering, Sales
                     eng = db.create_department(organization=org, head=manager1, name="Engineering")
                     sales = db.create_department(organization=org, head=manager2, name="Sales")

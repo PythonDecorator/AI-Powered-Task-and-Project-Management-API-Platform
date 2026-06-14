@@ -7,8 +7,8 @@ const DashboardLayout = ({ children }) => {
         display: "flex",
         flex: 1,
         flexDirection: "column",
-        ml: { xs: 0, lg: 30 },
-        p: { xs: 2, sm: 3, md: 4 },
+        px: { xs: 2, sm: 2, md: 3 },
+        py: { xs: 2, sm: 2, md: 3 },
         minHeight: "100vh",
       }}
     >

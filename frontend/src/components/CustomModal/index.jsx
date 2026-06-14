@@ -8,12 +8,13 @@ import {
 import { Close as CloseIcon } from '@mui/icons-material';
 import { ModalContext } from '../../store/ModalContextProvider.jsx';
 
-const CustomModal = ({ children, title, maxWidth = 'sm' }) => {
+const CustomModal = ({ children, title, maxWidth = 'sm', action }) => {
   const { modalIsOpen, onCloseModal } = useContext(ModalContext);
+  const shouldShow = action ? (modalIsOpen.open && modalIsOpen.action === action) : modalIsOpen.open;
 
   return (
     <Dialog
-      open={modalIsOpen.open}
+      open={shouldShow}
       onClose={onCloseModal}
       maxWidth={maxWidth}
       fullWidth
