@@ -1,17 +1,20 @@
 import { useContext, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Box, Typography, Button } from '@mui/material';
-import DashboardLayout from '../../../layouts/LayoutContainers/DashboardLayout/index.jsx';
+import { useMutation } from '@tanstack/react-query';
+import { Box, Typography, Button, Chip } from '@mui/material';
+import { useCrudTable } from '../../../components/CrudTable/useCrudTable';
+import CrudTable from '../../../components/CrudTable';
+import OrganizationPageLayout from '../OrganizationLayout.jsx';
 import ProjectsAddModal from './ProjectsAddModal.jsx';
 import ProjectsEditModal from './ProjectsEditModal.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { projectsUrl, deleteProjectUrl } from '../../../utils/helpers/apiUrls.js';
-import Loading from '../../../components/Loading/index.jsx';
-import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
+import { queryClient } from '../../../utils/helpers/http.js';
 import DeleteConfirmDialog from '../../../components/DeleteConfirmDialog/index.jsx';
-import ProjectsTable from './ProjectsTable.jsx';
+import ActionMenu from '../../../components/ActionMenu/index.jsx';
+import CustomTypography from '../../../components/CustomTypography/index.jsx';
 import { useSnackbar } from '../../../components/CustomSnackBar';
+import Loading from '../../../components/Loading/index.jsx';
 
 const ProjectsPage = () => {
   const { onOpenModal } = useContext(ModalContext);
@@ -19,13 +22,10 @@ const ProjectsPage = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  const { data: projectsResponse, isLoading, isError, error, refetch } = useQuery({
-    queryKey: [projectsUrl],
-    queryFn: ({ signal }) => authorizedRequest({ url: projectsUrl, signal }),
-    staleTime: 10 * 60 * 1000,
+  const table = useCrudTable({
+    url: projectsUrl,
+    defaultPageSize: 10,
   });
-
-  const projects = projectsResponse?.results || [];
 
   const deleteMutation = useMutation({
     mutationFn: (id) =>
@@ -33,6 +33,14 @@ const ProjectsPage = () => {
         url: deleteProjectUrl(id),
         method: 'DELETE',
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crud-table', projectsUrl] });
+      showSnackbar('Project deleted successfully', 'success');
+      setDeleteConfirm(null);
+    },
+    onError: () => {
+      showSnackbar('Failed to delete project', 'error');
+    },
   });
 
   const handleDeleteClick = (project) => {
@@ -40,14 +48,7 @@ const ProjectsPage = () => {
   };
 
   const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(deleteConfirm.id);
-      showSnackbar('Project deleted successfully', 'success');
-      setDeleteConfirm(null);
-      refetch();
-    } catch (err) {
-      showSnackbar('Failed to delete project', 'error');
-    }
+    await deleteMutation.mutateAsync(deleteConfirm.id);
   };
 
   const handleEditClick = (project) => {
@@ -60,71 +61,122 @@ const ProjectsPage = () => {
     onOpenModal('Add Project');
   };
 
-  let content;
+  // Define columns for CrudTable with ActionMenu
+  const columns = [
+    {
+      field: 'name',
+      headerName: 'Project Name',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params) => (
+        <CustomTypography sx={{ fontWeight: 500 }}>
+          {params.row.name}
+        </CustomTypography>
+      ),
+    },
+    {
+      field: 'description',
+      headerName: 'Description',
+      flex: 1.5,
+      minWidth: 250,
+      renderCell: (params) => (
+        <CustomTypography sx={{ color: 'text.secondary' }}>
+          {params.row.description || 'No description'}
+        </CustomTypography>
+      ),
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 0.8,
+      minWidth: 120,
+      renderCell: (params) => {
+        const statusColors = {
+          on_hold: 'warning',
+          in_progress: 'info',
+          completed: 'success',
+          archived: 'default',
+        };
+        const statusColor = statusColors[params.row.status] || 'default';
+        return (
+          <Chip
+            label={params.row.status?.replace('_', ' ') || 'N/A'}
+            size="small"
+            color={statusColor}
+            variant="outlined"
+          />
+        );
+      },
+    },
+    {
+      field: 'action',
+      headerName: 'Actions',
+      flex: 0.8,
+      minWidth: 120,
+      sortable: false,
+      renderCell: (params) => (
+        <ActionMenu
+          menuItems={[
+            {
+              label: 'Edit',
+              action: () => handleEditClick(params.row),
+            },
+            {
+              label: 'Delete',
+              color: 'error',
+              action: () => handleDeleteClick(params.row),
+            },
+          ]}
+        />
+      ),
+    },
+  ];
 
-  if (isLoading) {
-    content = <Loading message="Loading projects..." />;
-  } else if (isError) {
-    content = <ErrorMessage message={error?.message || 'Failed to load projects'} onRetry={refetch} />;
-  } else if (projects && projects.length > 0) {
-    content = (
-      <ProjectsTable
-        data={projects}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-      />
-    );
-  } else {
-    content = (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h6" sx={{ color: 'text.secondary' }}>
-          No projects yet
-        </Typography>
-        <Button variant="contained" onClick={handleAddClick}>
-          Create First Project
-        </Button>
-      </Box>
-    );
-  }
+  const emptyState = (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '400px',
+        gap: 2,
+      }}
+    >
+      <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+        No projects yet
+      </Typography>
+      <Button variant="contained" onClick={handleAddClick}>
+        Create First Project
+      </Button>
+    </Box>
+  );
 
   return (
-    <DashboardLayout>
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-            <Box sx={{ width: 4, height: 28, borderRadius: 1, backgroundColor: 'primary.main' }} />
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                Projects
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Manage your organization's projects
-              </Typography>
-            </Box>
-          </Box>
-          {projects.length > 0 && (
-            <Button variant="contained" onClick={handleAddClick}>
-              + New Project
-            </Button>
-          )}
-        </Box>
-      </Box>
+    <>
+      <OrganizationPageLayout
+        title="Projects"
+        subtitle="Manage your organization's projects"
+        onActionClick={handleAddClick}
+        actionLabel="+ New Project"
+        showActionButton={!table.isLoading && table.rows && table.rows.length > 0}
+      >
+        {table.isLoading ? (
+          <Loading message="Loading projects..." />
+        ) : table.rows && (table.rows.length > 0 || table.filterModel.items.length > 0) ? (
+          <CrudTable
+            table={table}
+            columns={columns}
+            tableName="Projects"
+            getRowId={(row) => row.id}
+          />
+        ) : (
+          emptyState
+        )}
+      </OrganizationPageLayout>
 
-      <Box sx={{ mb: 4 }}>
-        {content}
-      </Box>
-
-      <ProjectsAddModal onSuccess={refetch} />
-      {selectedProject && <ProjectsEditModal project={selectedProject} onSuccess={refetch} />}
+      <ProjectsAddModal onSuccess={table.refetch} />
+      {selectedProject && <ProjectsEditModal project={selectedProject} onSuccess={table.refetch} />}
 
       <DeleteConfirmDialog
         open={!!deleteConfirm}
@@ -137,7 +189,7 @@ const ProjectsPage = () => {
         requireTypeConfirm={true}
         showReason={false}
       />
-    </DashboardLayout>
+    </>
   );
 };
 

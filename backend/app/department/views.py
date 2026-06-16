@@ -4,7 +4,10 @@ Department API Views.
 from rest_framework import permissions, viewsets, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
+from utils.helpers import PaginateItems
 from . import serializers
 from .models import Department
 from .permissions import CanManageDepartment
@@ -18,6 +21,12 @@ class ManageDepartmentAPIView(viewsets.ModelViewSet):
     serializer_class = serializers.DepartmentSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, CanManageDepartment]
+    pagination_class = PaginateItems
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+
+    # Enable search and filtering
+    search_fields = ['name']
+    ordering_fields = ['id', 'name', 'created_at']
 
     # Class-level queryset required by DRF router; get_queryset() narrows it.
     queryset = Department.objects.none()
@@ -74,10 +83,17 @@ class ManageDepartmentAPIView(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(queryset, many=True)
-        return Response(
-            {"ok": True, "results": serializer.data}
-        )
+        return Response({
+            "ok": True,
+            "results": serializer.data,
+            "count": queryset.count()
+        })
 
     # ── Destroy ────────────────────────────────────────────────────────────────
 

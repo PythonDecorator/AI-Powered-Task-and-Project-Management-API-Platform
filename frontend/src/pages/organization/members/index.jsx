@@ -1,17 +1,20 @@
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Box, Typography, Button } from '@mui/material';
-import DashboardLayout from '../../../layouts/LayoutContainers/DashboardLayout/index.jsx';
+import { Box, Avatar, Chip, Typography, Button } from '@mui/material';
+import { useCrudTable } from '../../../components/CrudTable/useCrudTable';
+import CrudTable from '../../../components/CrudTable';
+import OrganizationPageLayout from '../OrganizationLayout.jsx';
 import MembersAddModal from './MembersAddModal.jsx';
 import MembersEditModal from './MembersEditModal.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { membersUrl, deleteMemberUrl, reactivateMemberUrl } from '../../../utils/helpers/apiUrls.js';
-import Loading from '../../../components/Loading/index.jsx';
-import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
+import { queryClient } from '../../../utils/helpers/http.js';
 import DeleteConfirmDialog from '../../../components/DeleteConfirmDialog/index.jsx';
-import MembersTable from './MembersTable.jsx';
+import ActionMenu from '../../../components/ActionMenu/index.jsx';
+import CustomTypography from '../../../components/CustomTypography/index.jsx';
 import { useSnackbar } from '../../../components/CustomSnackBar';
+import Loading from '../../../components/Loading/index.jsx';
 
 const MembersPage = () => {
   const { onOpenModal } = useContext(ModalContext);
@@ -19,32 +22,19 @@ const MembersPage = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [hardDeleteConfirm, setHardDeleteConfirm] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
-  const [currentUserRole, setCurrentUserRole] = useState(null);
 
-  const { data: membersResponse, isLoading, isError, error, refetch } = useQuery({
-    queryKey: [membersUrl],
-    queryFn: ({ signal }) => authorizedRequest({ url: membersUrl, signal }),
-    staleTime: 10 * 60 * 1000,
+  const table = useCrudTable({
+    url: membersUrl,
+    defaultPageSize: 5,
   });
 
-  const members = membersResponse?.results || [];
+  const { data: userMeData } = useQuery({
+    queryKey: ['/user/me/'],
+    queryFn: ({ signal }) => authorizedRequest({ url: '/user/me/', signal }),
+    staleTime: 30 * 60 * 1000,
+  });
 
-  // Get current user's role
-  useEffect(() => {
-    const getUserRole = async () => {
-      try {
-        const response = await authorizedRequest({
-          url: '/user/me/',
-        });
-        if (response.member?.role) {
-          setCurrentUserRole(response.member.role);
-        }
-      } catch (err) {
-        console.error('Failed to get user role:', err);
-      }
-    };
-    getUserRole();
-  }, []);
+  const isOwner = userMeData?.member?.role === 'owner';
 
   const deleteMutation = useMutation({
     mutationFn: (id) =>
@@ -53,6 +43,14 @@ const MembersPage = () => {
         method: 'POST',
         payload: {},
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crud-table', membersUrl] });
+      showSnackbar('Member deactivated successfully', 'success');
+      setDeleteConfirm(null);
+    },
+    onError: () => {
+      showSnackbar('Failed to deactivate member', 'error');
+    },
   });
 
   const hardDeleteMutation = useMutation({
@@ -61,6 +59,14 @@ const MembersPage = () => {
         url: `${membersUrl}${id}/delete-member/`,
         method: 'DELETE',
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crud-table', membersUrl] });
+      showSnackbar('Member permanently deleted', 'success');
+      setHardDeleteConfirm(null);
+    },
+    onError: () => {
+      showSnackbar('Failed to delete member', 'error');
+    },
   });
 
   const reactivateMutation = useMutation({
@@ -70,6 +76,13 @@ const MembersPage = () => {
         method: 'POST',
         payload: {},
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crud-table', membersUrl] });
+      showSnackbar('Member reactivated successfully', 'success');
+    },
+    onError: () => {
+      showSnackbar('Failed to reactivate member', 'error');
+    },
   });
 
   const getDeleteWarnings = (member) => {
@@ -91,38 +104,16 @@ const MembersPage = () => {
   };
 
   const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(deleteConfirm.id);
-      showSnackbar('Member deactivated successfully', 'success');
-      setDeleteConfirm(null);
-      refetch();
-    } catch (err) {
-      showSnackbar('Failed to deactivate member', 'error');
-    }
+    await deleteMutation.mutateAsync(deleteConfirm.id);
   };
 
   const handleHardDelete = async () => {
-    try {
-      await hardDeleteMutation.mutateAsync(hardDeleteConfirm.id);
-      showSnackbar('Member permanently deleted', 'success');
-      setHardDeleteConfirm(null);
-      refetch();
-    } catch (err) {
-      showSnackbar('Failed to delete member', 'error');
-    }
+    await hardDeleteMutation.mutateAsync(hardDeleteConfirm.id);
   };
 
   const handleReactivate = async (member) => {
-    try {
-      await reactivateMutation.mutateAsync(member.id);
-      showSnackbar('Member reactivated successfully', 'success');
-      refetch();
-    } catch (err) {
-      showSnackbar('Failed to reactivate member', 'error');
-    }
+    await reactivateMutation.mutateAsync(member.id);
   };
-
-  const isOwner = currentUserRole === 'owner';
 
   const handleEditClick = (member) => {
     setSelectedMember(member);
@@ -134,74 +125,199 @@ const MembersPage = () => {
     onOpenModal('Add Member');
   };
 
-  let content;
+  // Define columns for CrudTable with ActionMenu in the actions column
+  const columns = [
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Avatar sx={{ width: 32, height: 32 }}>
+            {params.row.name?.charAt(0).toUpperCase() || params.row.email.charAt(0).toUpperCase()}
+          </Avatar>
+          <CustomTypography sx={{ fontWeight: 500 }}>
+            {params.row.name || params.row.email}
+          </CustomTypography>
+        </Box>
+      ),
+    },
+    {
+      field: 'email',
+      headerName: 'Email',
+      flex: 1,
+      minWidth: 220,
+      renderCell: (params) => (
+        <CustomTypography sx={{ color: 'text.secondary' }}>
+          {params.row.email}
+        </CustomTypography>
+      ),
+    },
+    {
+      field: 'role',
+      headerName: 'Role',
+      flex: 0.8,
+      minWidth: 120,
+      renderCell: (params) => {
+        const roleColors = {
+          admin: 'error',
+          manager: 'info',
+          member: 'default',
+        };
+        const roleColor = roleColors[params.row.role] || 'default';
+        return (
+          <Chip
+            label={params.row.role || 'N/A'}
+            size="small"
+            color={roleColor}
+            variant="outlined"
+          />
+        );
+      },
+    },
+    {
+      field: 'is_active',
+      headerName: 'Status',
+      flex: 0.8,
+      minWidth: 120,
+      renderCell: (params) => {
+        const isActive = params.row.is_active;
+        const hasUser = !!params.row.user;
 
-  if (isLoading) {
-    content = <Loading message="Loading members..." />;
-  } else if (isError) {
-    content = <ErrorMessage message={error?.message || 'Failed to load members'} onRetry={refetch} />;
-  } else if (members && members.length > 0) {
-    content = (
-      <MembersTable
-        data={members}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-        onHardDelete={setHardDeleteConfirm}
-        onReactivate={handleReactivate}
-        isOwner={isOwner}
-      />
-    );
-  } else {
-    content = (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h6" sx={{ color: 'text.secondary' }}>
-          No members yet
-        </Typography>
-        <Button variant="contained" onClick={handleAddClick}>
-          Add First Member
-        </Button>
-      </Box>
-    );
-  }
+        let label, color;
+        if (!hasUser) {
+          label = 'Pending';
+          color = 'warning';
+        } else if (isActive) {
+          label = 'Active';
+          color = 'success';
+        } else {
+          label = 'Inactive';
+          color = 'error';
+        }
+
+        return (
+          <Chip
+            label={label}
+            size="small"
+            color={color}
+            variant="filled"
+          />
+        );
+      },
+    },
+    {
+      field: 'departments',
+      headerName: 'Departments',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params) => {
+        const departments = params.row.departments;
+        return departments && departments.length > 0 ? (
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            {departments.map((dept) => (
+              <Chip
+                key={dept.id}
+                label={dept.name}
+                size="small"
+                variant="outlined"
+              />
+            ))}
+          </Box>
+        ) : (
+          <CustomTypography sx={{ color: 'text.secondary' }}>
+            Unassigned
+          </CustomTypography>
+        );
+      },
+    },
+    {
+      field: 'action',
+      headerName: 'Actions',
+      flex: 0.8,
+      minWidth: 120,
+      sortable: false,
+      renderCell: (params) => {
+        const menuItems = [
+          {
+            label: 'Edit',
+            action: () => handleEditClick(params.row),
+          },
+        ];
+
+        if (params.row.is_active) {
+          menuItems.push({
+            label: 'Deactivate',
+            color: 'error',
+            action: () => handleDeleteClick(params.row),
+          });
+        } else {
+          menuItems.push({
+            label: 'Reactivate',
+            color: 'success',
+            action: () => handleReactivate(params.row),
+          });
+        }
+
+        if (isOwner) {
+          menuItems.push({
+            label: 'Delete',
+            color: 'error',
+            action: () => setHardDeleteConfirm(params.row),
+          });
+        }
+
+        return <ActionMenu menuItems={menuItems} />;
+      },
+    },
+  ];
+
+  const emptyState = (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '400px',
+        gap: 2,
+      }}
+    >
+      <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+        No members yet
+      </Typography>
+      <Button variant="contained" onClick={handleAddClick}>
+        Add First Member
+      </Button>
+    </Box>
+  );
 
   return (
-    <DashboardLayout>
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-            <Box sx={{ width: 4, height: 28, borderRadius: 1, backgroundColor: 'primary.main' }} />
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                Members
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Manage your organization's team members
-              </Typography>
-            </Box>
-          </Box>
-          {members.length > 0 && (
-            <Button variant="contained" onClick={handleAddClick}>
-              + New Member
-            </Button>
-          )}
-        </Box>
-      </Box>
+    <>
+      <OrganizationPageLayout
+        title="Members"
+        subtitle="Manage your organization's team members"
+        onActionClick={handleAddClick}
+        actionLabel="+ New Member"
+        showActionButton={!table.isLoading && table.rows && table.rows.length > 0}
+      >
+        {table.isLoading ? (
+          <Loading message="Loading members..." />
+        ) : table.rows && (table.rows.length > 0 || table.filterModel.items.length > 0) ? (
+          <CrudTable
+            table={table}
+            columns={columns}
+            tableName="Members"
+            getRowId={(row) => row.id}
+          />
+        ) : (
+          emptyState
+        )}
+      </OrganizationPageLayout>
 
-      <Box sx={{ mb: 4 }}>
-        {content}
-      </Box>
-
-      <MembersAddModal onSuccess={refetch} />
-      {selectedMember && <MembersEditModal member={selectedMember} onSuccess={refetch} />}
+      <MembersAddModal onSuccess={table.refetch} />
+      {selectedMember && <MembersEditModal member={selectedMember} onSuccess={table.refetch} />}
 
       <DeleteConfirmDialog
         open={!!deleteConfirm}
@@ -226,7 +342,7 @@ const MembersPage = () => {
         requireTypeConfirm={true}
         showReason={false}
       />
-    </DashboardLayout>
+    </>
   );
 };
 
