@@ -1,5 +1,10 @@
 # Frontend Rules
 
+## 📋 CRUD Operations Pattern
+**→ See [CRUD Skills Guide](./crud.md)** for complete CRUD implementation, useCrudTable hook, CrudTable component, search/filter, and production examples.
+
+---
+
 ## Development Process
 - **Always inspect existing codebase before making changes** — read actual patterns and structure, don't assume
 - **Follow existing patterns and reuse components** — avoid duplicating functionality when solutions already exist
@@ -10,6 +15,8 @@
 - `main.jsx` mount only · `App.jsx` providers only · `src/store/` UI state via Context · server state in TanStack Query only
 - Components: `src/components/` (Custom* primitives) · `src/examples/` (composites) · `src/pages/{feature}/` (pages + sub-components) · Max file length: 400 lines — split into subcomponents
 - Routing: wrap every page in a layout from `src/layouts/` · always update `src/router.jsx`
+- **Auth pages**: Use `/src/pages/sign-in-side/` for login/auth flows (replaces deprecated `/pages/authentication/`)
+- **Dashboard**: Use `/src/pages/dashboardNew/` for main dashboard (replaces deprecated `/pages/dashboard/`)
 
 ## Component & Data Fetching Strategy (HitchPay Pattern)
 - **No custom hooks** · Use React Query directly in components
@@ -77,11 +84,20 @@
 - **Premium Touches**: Subtle backdrop-filter blur on modals · layered shadows for depth · gradient borders on premium cards
 
 ## Forms & Tables
+**→ Full CRUD examples in [CRUD Skills Guide](./crud.md)** — includes useCrudTable hook, CrudTable component, search/filter, mutations, and production patterns.
+
+### Forms
 - **Forms**: GeneralForm component + inline schema with Zod validation + fieldProps for field-specific options
 - **Form sections**: Group related fields via `sections` prop: `{ 'Personal Info': ['name', 'email'], 'Work': ['salary', 'role'] }`
-- **Tables**: SimpleTable or DataGridTable components, receive `data` and `onEdit`/`onDelete` callbacks
 - **Modal forms**: Modals use GeneralForm directly, handle submission, call `onSuccess?.()` to trigger parent `refetch()`
 - **Dynamic options**: Use `onChangeListener` in schema to fetch dependent data (e.g., members dropdown updates when department changes)
+
+### Tables (DataGrid)
+- **CrudTable component**: Production CRUD tables with server-side pagination, sorting, filtering
+- **useCrudTable hook**: React Query integration with smart caching, retry logic, request cancellation
+- **CrudTableHeader**: Built-in search (Enter/button trigger, not on keystroke), refresh (clears all filters), column customization
+- **Search**: Configure `search_fields` in backend ViewSet, automatic UI handling in frontend
+- **Mutations**: Use `queryClient.invalidateQueries()` for cache invalidation (auto-refetch on success)
 
 ## Data & API
 - **API client**: `http.js` with axios + interceptors for token management
