@@ -1,10 +1,11 @@
 """
 All helpers should be written here
 """
+import math
 import os
 import uuid
-import math
 from collections import OrderedDict
+
 from rest_framework import pagination
 from rest_framework.response import Response
 
@@ -23,7 +24,7 @@ def generate_upload_path(folder: str, filename: str) -> str:
 
 
 class PaginateItems(pagination.PageNumberPagination):
-    page_size = 15
+    page_size = 10
     page_size_query_param = "per_page"
     max_page_size = 25
 

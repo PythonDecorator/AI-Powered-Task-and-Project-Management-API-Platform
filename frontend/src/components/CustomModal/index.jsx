@@ -1,101 +1,82 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Box } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { createNeonGlow } from '../../assets/theme/utilities';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
 
-const CustomModal = ({
-  open = false,
+export default function CustomModal({
+  open,
   onClose,
   title,
   children,
-  actions,
-  size = 'sm',
-  neon = false,
-  neonColor = '#00d4ff',
-  sx,
-  ...props
-}) => {
-  const sizeMap = {
-    xs: '300px',
-    sm: '400px',
-    md: '600px',
-    lg: '800px',
-    xl: '1000px',
-  };
-
+  onSubmit,
+  submitLabel = 'Save',
+  cancelLabel = 'Cancel',
+  maxWidth = 'sm',
+  fullWidth = true,
+  showActions = true,
+  disableBackdropClick = false,
+}) {
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth={maxWidth}
+      fullWidth={fullWidth}
+      onBackdropClick={disableBackdropClick ? undefined : onClose}
       PaperProps={{
         sx: {
-          backgroundColor: 'rgba(26, 26, 46, 0.95)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(102, 126, 234, 0.2)',
-          borderRadius: '12px',
-          boxShadow: neon
-            ? createNeonGlow(neonColor, 0.3)
-            : '0 10px 40px rgba(0, 0, 0, 0.3)',
-          ...sx,
+          borderRadius: 2,
+          backgroundImage: 'none',
         },
       }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
-        },
-      }}
-      {...props}
     >
       {title && (
-        <Box
+        <DialogTitle
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingRight: 1,
-          }}
-        >
-          <DialogTitle
-            sx={{
-              flex: 1,
-              color: 'text.primary',
-              fontWeight: 600,
-              fontSize: '18px',
-            }}
-          >
-            {title}
-          </DialogTitle>
-          <IconButton
-            onClick={onClose}
-            size="small"
-            sx={{
-              color: 'text.secondary',
-              '&:hover': {
-                background: 'rgba(102, 126, 234, 0.1)',
-              },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      )}
-
-      {children && (
-        <DialogContent
-          sx={{
+            fontWeight: 700,
+            fontSize: '1.3rem',
+            pb: 2,
             color: 'text.primary',
-            paddingTop: title ? '12px' : '24px',
-            paddingBottom: actions ? '12px' : '24px',
           }}
         >
-          {children}
-        </DialogContent>
+          {title}
+        </DialogTitle>
       )}
-
-      {actions && <DialogActions sx={{ padding: '16px' }}>{actions}</DialogActions>}
+      <DialogContent sx={{ py: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {children}
+        </Box>
+      </DialogContent>
+      {showActions && (
+        <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.95rem',
+              fontWeight: 500,
+            }}
+          >
+            {cancelLabel}
+          </Button>
+          {onSubmit && (
+            <Button
+              onClick={onSubmit}
+              variant="contained"
+              sx={{
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                fontWeight: 500,
+              }}
+            >
+              {submitLabel}
+            </Button>
+          )}
+        </DialogActions>
+      )}
     </Dialog>
   );
-};
-
-export default CustomModal;
+}

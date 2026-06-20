@@ -1,4 +1,5 @@
 from celery import shared_task
+from django.conf import settings
 from utils.email_templates import EMAIL_TEMPLATES
 from utils.send_emails import send_email
 
@@ -11,10 +12,13 @@ def send_invitation_email_to_member_task(data):
     message = email_config["message"]
     template_name = email_config["template_name"]
 
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    invitation_link = f"{frontend_url}/confirm-invitation?token={data['invitation_token']}"
+
     context = {
         "first_name": data["first_name"],
         "heading": heading,
-        "message": message.format(token=data["invitation_token"]),
+        "message": message.format(invitation_link=invitation_link),
     }
 
     send_email(

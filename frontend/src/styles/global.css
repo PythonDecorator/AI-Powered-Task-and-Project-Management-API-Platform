@@ -1,0 +1,50 @@
+/* Global Scrollbar Styling */
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.4);
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.6);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(102, 126, 234, 0.8);
+}
+
+/* Firefox */
+* {
+  scrollbar-color: rgba(102, 126, 234, 0.4) transparent;
+  scrollbar-width: thin;
+}
+
+*:hover {
+  scrollbar-color: rgba(102, 126, 234, 0.6) transparent;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.7);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: rgba(102, 126, 234, 0.9);
+  }
+}
