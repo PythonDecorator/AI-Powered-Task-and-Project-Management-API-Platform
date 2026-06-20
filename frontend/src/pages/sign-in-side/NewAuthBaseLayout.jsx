@@ -3,12 +3,14 @@ import Stack from '@mui/material/Stack';
 import { Outlet } from 'react-router-dom';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
+import { NotificationsProvider } from '../organization/shared';
 
 export default function NewAuthBaseLayout(props) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
+      <NotificationsProvider>
+        <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
       <Stack
         direction="column"
         component="main"
@@ -38,7 +40,8 @@ export default function NewAuthBaseLayout(props) {
         ]}
       >
         <Outlet />
-      </Stack>
+        </Stack>
+      </NotificationsProvider>
     </AppTheme>
   );
 }

@@ -8,6 +8,7 @@ import { tabsClasses } from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import MailRoundedIcon from '@mui/icons-material/MailRounded';
 import SideMenuMobile from './SideMenuMobile';
 import MenuButton from './MenuButton';
 import ColorModeIconDropdown from '../../shared-theme/ColorModeIconDropdown';
@@ -68,6 +69,9 @@ export default function AppNavbar() {
               Dashboard
             </Typography>
           </Stack>
+          <MenuButton aria-label="messages">
+            <MailRoundedIcon />
+          </MenuButton>
           <ColorModeIconDropdown />
           <MenuButton aria-label="menu" onClick={toggleDrawer(true)}>
             <MenuRoundedIcon />

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Menu, MenuItem, IconButton, Divider } from '@mui/material';
+import { Menu, MenuItem, IconButton, Divider, useTheme, alpha } from '@mui/material';
 import { MoreHoriz as MoreHorizIcon } from '@mui/icons-material';
-import CustomTypography from '../CustomTypography/index.jsx';
+import Typography from "@mui/material/Typography";
 
 const ActionMenu = ({ menuItems = [] }) => {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -33,7 +34,7 @@ const ActionMenu = ({ menuItems = [] }) => {
           color: 'primary.main',
           transition: 'all 0.2s ease',
           '&:hover': {
-            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
           },
         }}
       >
@@ -51,7 +52,7 @@ const ActionMenu = ({ menuItems = [] }) => {
             borderRadius: '6px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
             minWidth: '160px',
-            border: '1px solid rgba(102, 126, 234, 0.15)',
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
           },
         }}
       >
@@ -64,11 +65,11 @@ const ActionMenu = ({ menuItems = [] }) => {
               px: 2,
               transition: 'all 0.2s ease',
               '&:hover': {
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
               },
             }}
           >
-            <CustomTypography
+            <Typography
               variant="body2"
               sx={{
                 color: 'text.primary',
@@ -76,7 +77,7 @@ const ActionMenu = ({ menuItems = [] }) => {
               }}
             >
               {label}
-            </CustomTypography>
+            </Typography>
           </MenuItem>
         ))}
 
@@ -89,11 +90,11 @@ const ActionMenu = ({ menuItems = [] }) => {
               px: 2,
               transition: 'all 0.2s ease',
               '&:hover': {
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                backgroundColor: alpha(theme.palette.success.main, 0.1),
               },
             }}
           >
-            <CustomTypography
+            <Typography
               variant="body2"
               sx={{
                 color: 'success.main',
@@ -101,12 +102,12 @@ const ActionMenu = ({ menuItems = [] }) => {
               }}
             >
               {label}
-            </CustomTypography>
+            </Typography>
           </MenuItem>
         ))}
 
         {(regularItems.length > 0 || successItems.length > 0) && errorItems.length > 0 && (
-          <Divider sx={{ my: 0.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
+          <Divider sx={{ my: 0.5, borderColor: alpha(theme.palette.primary.main, 0.1) }} />
         )}
 
         {errorItems.map(({ label, action }, index) => (
@@ -118,11 +119,11 @@ const ActionMenu = ({ menuItems = [] }) => {
               px: 2,
               transition: 'all 0.2s ease',
               '&:hover': {
-                backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                backgroundColor: alpha(theme.palette.error.main, 0.1),
               },
             }}
           >
-            <CustomTypography
+            <Typography
               variant="body2"
               sx={{
                 color: 'error.main',
@@ -130,7 +131,7 @@ const ActionMenu = ({ menuItems = [] }) => {
               }}
             >
               {label}
-            </CustomTypography>
+            </Typography>
           </MenuItem>
         ))}
       </Menu>

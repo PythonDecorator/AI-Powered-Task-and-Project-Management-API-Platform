@@ -12,6 +12,11 @@ STAGED=$(git -C "$CLAUDE_PROJECT_DIR" diff --cached --name-only 2>/dev/null | wc
 
 echo "[$TIMESTAMP] Session ended | Branch: $BRANCH | Changed: $CHANGED | Staged: $STAGED" >> "$LOG_FILE"
 
+# Rotate log — keep last 500 lines
+if [ -f "$LOG_FILE" ] && [ "$(wc -l < "$LOG_FILE")" -gt 500 ]; then
+  tail -n 500 "$LOG_FILE" > "$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
+fi
+
 # Remind about tests if files were changed
 if [ "$CHANGED" -gt 0 ] || [ "$STAGED" -gt 0 ]; then
   echo "" >&2

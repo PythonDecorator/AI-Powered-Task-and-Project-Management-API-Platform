@@ -1,23 +1,12 @@
-import { Box, CircularProgress, Typography } from '@mui/material';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
 
-const Loading = ({ message = 'Loading...', size = 40 }) => {
+export default function Loading({ message = 'Loading...' }) {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '400px',
-        gap: 2,
-      }}
-    >
-      <CircularProgress size={size} />
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-        {message}
-      </Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+      <CircularProgress />
+      {message && <Typography sx={{ mt: 2 }}>{message}</Typography>}
     </Box>
   );
-};
-
-export default Loading;
+}

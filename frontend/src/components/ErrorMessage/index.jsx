@@ -1,38 +1,10 @@
-import { Box, Typography, Alert, Button } from '@mui/material';
-import { RefreshOutlined } from '@mui/icons-material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 
-const ErrorMessage = ({ message = 'An error occurred', onRetry }) => {
+export default function ErrorMessage({ message = 'An error occurred', severity = 'error' }) {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '400px',
-        gap: 2,
-        px: 2,
-      }}
-    >
-      <Alert severity="error" sx={{ maxWidth: '500px', width: '100%' }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          Something went wrong
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          {message}
-        </Typography>
-      </Alert>
-      {onRetry && (
-        <Button
-          variant="outlined"
-          startIcon={<RefreshOutlined />}
-          onClick={onRetry}
-        >
-          Try Again
-        </Button>
-      )}
+    <Box sx={{ py: 2 }}>
+      <Alert severity={severity}>{message}</Alert>
     </Box>
   );
-};
-
-export default ErrorMessage;
+}

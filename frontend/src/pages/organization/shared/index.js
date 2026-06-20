@@ -4,8 +4,7 @@ export {
   DialogsProvider,
   useNotifications,
   NotificationsProvider,
-  useDataTable,
 } from './hooks';
 
 // Components
-export { GenericTable, PageContainer } from './components';
+export { PageContainer } from './components';

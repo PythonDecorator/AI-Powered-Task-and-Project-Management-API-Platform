@@ -91,7 +91,7 @@ export function checkAuthLoader() {
 }
 
 /**
- * Protected auth loader - redirect to login if not authenticated
+ * Protected auth loader - redirect to log in if not authenticated
  */
 export function protectedAuthLoader() {
     const token = getAuthToken();

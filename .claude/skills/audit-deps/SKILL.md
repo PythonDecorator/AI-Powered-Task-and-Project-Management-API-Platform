@@ -1,3 +1,11 @@
+---
+name: audit-deps
+description: Audit all Python and Node dependencies for vulnerabilities, apply safe fixes, and confirm with a full test run. Run this periodically or when a CVE is reported.
+when_to_use: Use when asked to audit dependencies, check for vulnerabilities, update packages, or run a security scan. Triggers on "CVE", "vulnerability", "outdated packages", "pip-audit", "npm audit", "security".
+disable-model-invocation: true
+---
+
+
 # Dependency Security Audit & Update
 
 Audit all project dependencies for vulnerabilities, update any that have fixes available, and run the full test suite to confirm nothing broke.

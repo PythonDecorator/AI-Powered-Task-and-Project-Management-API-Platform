@@ -6,11 +6,11 @@ import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { createMemberUrl } from '../../../utils/helpers/apiUrls.js';
-import { useSnackbar } from '../../../components/CustomSnackBar';
+import { useNotifications } from '../shared';
 
 const MembersAddModal = ({ onSuccess }) => {
-  const { onCloseModal } = useContext(ModalContext);
-  const { showSnackbar } = useSnackbar();
+  const { modalIsOpen, onCloseModal } = useContext(ModalContext);
+  const { show: showNotification } = useNotifications();
 
   const createMutation = useMutation({
     mutationFn: (data) =>
@@ -115,16 +115,20 @@ const MembersAddModal = ({ onSuccess }) => {
         salary: parseFloat(formData.salary),
       };
       await createMutation.mutateAsync(payload);
-      showSnackbar('Member added successfully', 'success');
+      showNotification('Member added successfully', { severity: 'success' });
       onSuccess?.();
       onCloseModal();
     } catch (err) {
-      showSnackbar('Failed to add member', 'error');
+      showNotification('Failed to add member', { severity: 'error' });
     }
   };
 
   return (
-    <CustomModal title="Add Member" action="Add Member" maxWidth="sm">
+    <CustomModal
+      open={modalIsOpen.open && modalIsOpen.action === 'Add Member'}
+      onClose={onCloseModal}
+      title="Add Member"
+    >
       <GeneralForm
         schema={schema}
         onSubmit={handleSubmit}

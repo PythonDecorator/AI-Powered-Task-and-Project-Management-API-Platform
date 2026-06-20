@@ -2,68 +2,38 @@ import {lazy} from "react";
 import {createBrowserRouter} from "react-router-dom";
 
 import {checkAuthLoader, protectedAuthLoader} from "./utils/helpers/auth.js";
-import BaseLayout from "./pages/dashboard/BaseLayout/BaseLayout.jsx";
-import AuthBaseLayout from "./pages/authentication/BaseLayout/AuthBaseLayout.jsx";
-import SuspenseWrapper from "./examples/Loader/index.jsx";
+import SuspenseWrapper from "./components/Loader/index.jsx";
+import NewAuthBaseLayout from "./pages/sign-in-side/NewAuthBaseLayout.jsx";
+import NewBaseLayout from "./pages/dashboardNew/NewBaseLayout.jsx";
 
-// Lazy load authentication pages
-const LoginPage = lazy(() => import("./pages/authentication/login/index.jsx"));
-
+// Lazy load sign-in page
+const SignInSidePage = lazy(() => import("./pages/sign-in-side/SignInSide.jsx"));
 // Lazy load dashboard pages
-const Dashboard = lazy(() => import("./pages/dashboard/index.jsx"));
+const NewDashboard = lazy(() => import("./pages/dashboardNew/Dashboard.jsx"));
 const DepartmentsPage = lazy(() => import("./pages/organization/departments/index.jsx"));
 const MembersPage = lazy(() => import("./pages/organization/members/index.jsx"));
 const ProjectsPage = lazy(() => import("./pages/organization/projects/index.jsx"));
-const MarketingPage = lazy(() => import("./pages/marketing-page/MarketingPage.jsx"));
-const DashboardNewPage = lazy(() => import("./pages/dashboardNew/Dashboard.jsx"));
-const SignInSidePage = lazy(() => import("./pages/sign-in-side/SignInSide.jsx"));
-const CheckoutPage = lazy(() => import("./pages/checkout/Checkout.jsx"));
-const BlogPage = lazy(() => import("./pages/blog/Blog.jsx"));
-
-
 
 const router = createBrowserRouter([
     {
-        path: "/marketing-page",
-        element: <MarketingPage/>,
-    },
-    {
-        path: "/dashboard-new",
-        element: <DashboardNewPage/>,
-    },
-    {
-        path: "/sign-in-side",
-        element: <SignInSidePage/>,
-    },
-    {
-        path: "/checkout",
-        element: <CheckoutPage/>,
-    },
-    {
-        path: "/blog",
-        element: <BlogPage/>,
-    },
-
-    {
         path: "/",
-        element: <AuthBaseLayout/>,
+        element: <NewAuthBaseLayout/>,
         loader: checkAuthLoader,
         children: [
-            {index: true, element: SuspenseWrapper(LoginPage)},
-            {path: "login", element: SuspenseWrapper(LoginPage)},
+            {index: true, element: SuspenseWrapper(SignInSidePage)},
         ],
     },
     {
         path: "/dashboard",
-        element: <BaseLayout/>,
+        element: <NewBaseLayout/>,
         loader: protectedAuthLoader,
         children: [
-            {index: true, element: SuspenseWrapper(Dashboard)},
+            {index: true, element: SuspenseWrapper(NewDashboard)},
         ],
     },
     {
         path: "/organization",
-        element: <BaseLayout/>,
+        element: <NewBaseLayout/>,
         loader: protectedAuthLoader,
         children: [
             {path: "departments", element: SuspenseWrapper(DepartmentsPage)},

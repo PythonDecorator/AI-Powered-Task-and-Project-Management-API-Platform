@@ -6,11 +6,11 @@ import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { createProjectUrl } from '../../../utils/helpers/apiUrls.js';
-import { useSnackbar } from '../../../components/CustomSnackBar';
+import { useNotifications } from '../shared';
 
 const ProjectsAddModal = ({ onSuccess }) => {
-  const { onCloseModal } = useContext(ModalContext);
-  const { showSnackbar } = useSnackbar();
+  const { modalIsOpen, onCloseModal } = useContext(ModalContext);
+  const { show: showNotification } = useNotifications();
 
   const createMutation = useMutation({
     mutationFn: (data) =>
@@ -69,16 +69,20 @@ const ProjectsAddModal = ({ onSuccess }) => {
         status: formData.status || 'active',
       };
       await createMutation.mutateAsync(payload);
-      showSnackbar('Project created successfully', 'success');
+      showNotification('Project created successfully', { severity: 'success' });
       onSuccess?.();
       onCloseModal();
     } catch (err) {
-      showSnackbar('Failed to create project', 'error');
+      showNotification('Failed to create project', { severity: 'error' });
     }
   };
 
   return (
-    <CustomModal title="Add Project" action="Add Project" maxWidth="sm">
+    <CustomModal
+      open={modalIsOpen.open && modalIsOpen.action === 'Add Project'}
+      onClose={onCloseModal}
+      title="Add Project"
+    >
       <GeneralForm
         schema={schema}
         onSubmit={handleSubmit}

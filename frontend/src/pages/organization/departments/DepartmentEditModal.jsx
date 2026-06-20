@@ -6,13 +6,13 @@ import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { membersUrl, updateDepartmentUrl } from '../../../utils/helpers/apiUrls.js';
-import { useSnackbar } from '../../../components/CustomSnackBar';
+import { useNotifications } from '../shared';
 import Loading from '../../../components/Loading/index.jsx';
 import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
 
 const DepartmentEditModal = ({ department, onSuccess }) => {
-  const { onCloseModal } = useContext(ModalContext);
-  const { showSnackbar } = useSnackbar();
+  const { modalIsOpen, onCloseModal } = useContext(ModalContext);
+  const { show: showNotification } = useNotifications();
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) =>
@@ -89,11 +89,11 @@ const DepartmentEditModal = ({ department, onSuccess }) => {
         members: formData.members || [],
       };
       await updateMutation.mutateAsync({ id: department.id, data: payload });
-      showSnackbar('Department updated successfully', 'success');
+      showNotification('Department updated successfully', { severity: 'success' });
       onSuccess?.();
       onCloseModal();
     } catch (err) {
-      showSnackbar('Failed to update department', 'error');
+      showNotification('Failed to update department', { severity: 'error' });
     }
   };
 
@@ -101,7 +101,11 @@ const DepartmentEditModal = ({ department, onSuccess }) => {
   if (isError) return <ErrorMessage message={error?.message} />;
 
   return (
-    <CustomModal title="Edit Department" action="Edit Department" maxWidth="sm">
+    <CustomModal
+      open={modalIsOpen.open && modalIsOpen.action === 'Edit Department'}
+      onClose={onCloseModal}
+      title="Edit Department"
+    >
       <GeneralForm
         schema={schema}
         onSubmit={handleSubmit}

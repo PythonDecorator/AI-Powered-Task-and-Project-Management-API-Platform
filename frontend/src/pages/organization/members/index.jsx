@@ -13,12 +13,12 @@ import { queryClient } from '../../../utils/helpers/http.js';
 import DeleteConfirmDialog from '../../../components/DeleteConfirmDialog/index.jsx';
 import ActionMenu from '../../../components/ActionMenu/index.jsx';
 import CustomTypography from '../../../components/CustomTypography/index.jsx';
-import { useSnackbar } from '../../../components/CustomSnackBar';
+import { useNotifications } from '../shared';
 import Loading from '../../../components/Loading/index.jsx';
 
 const MembersPage = () => {
   const { onOpenModal } = useContext(ModalContext);
-  const { showSnackbar } = useSnackbar();
+  const { show: showNotification } = useNotifications();
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [hardDeleteConfirm, setHardDeleteConfirm] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -45,11 +45,11 @@ const MembersPage = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crud-table', membersUrl] });
-      showSnackbar('Member deactivated successfully', 'success');
+      showNotification('Member deactivated successfully', { severity: 'success' });
       setDeleteConfirm(null);
     },
     onError: () => {
-      showSnackbar('Failed to deactivate member', 'error');
+      showNotification('Failed to deactivate member', { severity: 'error' });
     },
   });
 
@@ -61,11 +61,11 @@ const MembersPage = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crud-table', membersUrl] });
-      showSnackbar('Member permanently deleted', 'success');
+      showNotification('Member permanently deleted', { severity: 'success' });
       setHardDeleteConfirm(null);
     },
     onError: () => {
-      showSnackbar('Failed to delete member', 'error');
+      showNotification('Failed to delete member', { severity: 'error' });
     },
   });
 
@@ -78,10 +78,10 @@ const MembersPage = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crud-table', membersUrl] });
-      showSnackbar('Member reactivated successfully', 'success');
+      showNotification('Member reactivated successfully', { severity: 'success' });
     },
     onError: () => {
-      showSnackbar('Failed to reactivate member', 'error');
+      showNotification('Failed to reactivate member', { severity: 'error' });
     },
   });
 

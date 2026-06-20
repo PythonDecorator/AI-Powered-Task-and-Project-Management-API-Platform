@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import MuiCard from '@mui/material/Card';
@@ -13,6 +15,10 @@ import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from './CustomIcons';
+import { useNotifications } from '../../organization/shared';
+import { unAuthorizedRequest } from '../../../utils/helpers/http';
+import { loginUrl } from '../../../utils/helpers/apiUrls';
+import { setTokens } from '../../../utils/helpers/auth';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -33,11 +39,32 @@ const Card = styled(MuiCard)(({ theme }) => ({
 }));
 
 export default function SignInCard() {
+  const navigate = useNavigate();
+  const { show: showNotification } = useNotifications();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+
+  const loginMutation = useMutation({
+    mutationFn: (credentials) =>
+      unAuthorizedRequest({
+        url: loginUrl,
+        method: 'POST',
+        payload: credentials,
+      }),
+    onSuccess: (data) => {
+      if (data?.access && data?.refresh) {
+        setTokens(data.access, data.refresh);
+        showNotification('Login successful!', { severity: 'success' });
+        navigate('/dashboard');
+      }
+    },
+    onError: (error) => {
+      showNotification(error.message || 'Login failed', { severity: 'error' });
+    },
+  });
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -45,18 +72,6 @@ export default function SignInCard() {
 
   const handleClose = () => {
     setOpen(false);
-  };
-
-  const handleSubmit = (event) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
-      return;
-    }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
   };
 
   const validateInputs = () => {
@@ -84,6 +99,18 @@ export default function SignInCard() {
     }
 
     return isValid;
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!validateInputs()) {
+      return;
+    }
+    const data = new FormData(event.currentTarget);
+    loginMutation.mutate({
+      email: data.get('email'),
+      password: data.get('password'),
+    });
   };
 
   return (
@@ -154,8 +181,13 @@ export default function SignInCard() {
           label="Remember me"
         />
         <ForgotPassword open={open} handleClose={handleClose} />
-        <Button type="submit" fullWidth variant="contained" onClick={validateInputs}>
-          Sign in
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          disabled={loginMutation.isPending}
+        >
+          {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
         </Button>
         <Typography sx={{ textAlign: 'center' }}>
           Don&apos;t have an account?{' '}

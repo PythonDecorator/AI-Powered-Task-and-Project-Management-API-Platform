@@ -6,13 +6,13 @@ import GeneralForm from '../../../components/GeneralForm/index.jsx';
 import { ModalContext } from '../../../store/ModalContextProvider.jsx';
 import { authorizedRequest } from '../../../utils/helpers/http.js';
 import { membersUrl, createDepartmentUrl } from '../../../utils/helpers/apiUrls.js';
-import { useSnackbar } from '../../../components/CustomSnackBar';
+import { useNotifications } from '../shared';
 import Loading from '../../../components/Loading/index.jsx';
 import ErrorMessage from '../../../components/ErrorMessage/index.jsx';
 
 const DepartmentAddModal = ({ onSuccess }) => {
-  const { onCloseModal } = useContext(ModalContext);
-  const { showSnackbar } = useSnackbar();
+  const { modalIsOpen, onCloseModal } = useContext(ModalContext);
+  const { show: showNotification } = useNotifications();
 
   const createMutation = useMutation({
     mutationFn: (data) =>
@@ -85,11 +85,11 @@ const DepartmentAddModal = ({ onSuccess }) => {
         members: formData.members || [],
       };
       await createMutation.mutateAsync(payload);
-      showSnackbar('Department created successfully', 'success');
+      showNotification('Department created successfully', { severity: 'success' });
       onSuccess?.();
       onCloseModal();
     } catch (err) {
-      showSnackbar('Failed to create department', 'error');
+      showNotification('Failed to create department', { severity: 'error' });
     }
   };
 
@@ -97,7 +97,11 @@ const DepartmentAddModal = ({ onSuccess }) => {
   if (isError) return <ErrorMessage message={error?.message} />;
 
   return (
-    <CustomModal title="Add Department" action="Add Department" maxWidth="sm">
+    <CustomModal
+      open={modalIsOpen.open && modalIsOpen.action === 'Add Department'}
+      onClose={onCloseModal}
+      title="Add Department"
+    >
       <GeneralForm
         schema={schema}
         onSubmit={handleSubmit}
